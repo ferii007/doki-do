@@ -15,6 +15,7 @@ import '../../domain/entities/budget_snapshot.dart';
 import '../../domain/entities/category_budget.dart';
 import '../../domain/entities/transaction_template.dart';
 import '../../domain/entities/transaction_type.dart';
+import '../../../settings/presentation/providers/app_settings_provider.dart';
 import '../providers/current_budget_provider.dart';
 import '../providers/selected_period_provider.dart';
 import '../providers/transaction_action_provider.dart';
@@ -22,13 +23,17 @@ import '../providers/transaction_template_provider.dart';
 import '../widgets/dashboard/budget_category_grid.dart';
 import '../widgets/dashboard/category_adjustment_sheet.dart';
 import '../widgets/dashboard/category_edit_sheet.dart';
+import '../widgets/dashboard/history_tab_body.dart';
 import '../widgets/dashboard/period_selector_sheet.dart';
 import '../widgets/dashboard/period_edit_sheet.dart';
 import '../widgets/dashboard/period_statistics_chart.dart';
 import '../widgets/dashboard/period_summary_card.dart';
-import '../widgets/dashboard/profile_tab_body.dart';
+// ProfileTabBody tetap tersedia untuk diaktifkan kembali setelah tab Profil
+// dikembalikan ke footer.
+// import '../widgets/dashboard/profile_tab_body.dart';
 import '../widgets/dashboard/quick_action_sheet.dart';
 import '../widgets/dashboard/settings_tab_body.dart';
+import '../widgets/transaction_type_icon.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
   const DashboardScreen({super.key});
@@ -46,10 +51,17 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     final periodsAsync = ref.watch(budgetPeriodsProvider);
     final selectedPeriodId = ref.watch(selectedPeriodIdProvider);
     final isSaving = ref.watch(transactionActionProvider);
+    final settings = ref.watch(appSettingsProvider).asData?.value;
+    FinancialPrivacyPreference.hideAmounts =
+        settings?.hideFinancialAmounts ?? false;
 
     return Scaffold(
       appBar: AppBar(
-        title: const Text('DokiDo'),
+        title: Text(switch (_selectedIndex) {
+          2 => context.tr('activity_history'),
+          3 => context.tr('settings'),
+          _ => 'DokiDo',
+        }),
         // actions: [
         //   IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
         //   IconButton(
@@ -87,7 +99,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                           Navigator.pushNamed(context, AppRouter.addPeriod),
                     )
                   else if (_selectedIndex == 2)
-                    const ProfileTabBody(currentSnapshot: null)
+                    const HistoryTabBody()
                   else
                     const SettingsTabBody(),
                 ],
@@ -106,6 +118,12 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   PeriodSummaryCard(
                     period: snapshot.period,
                     totalExpense: snapshot.totalExpense,
+                    amountsHidden: settings?.hideFinancialAmounts ?? false,
+                    onPrivacyToggle: () {
+                      ref
+                          .read(appSettingsProvider.notifier)
+                          .toggleFinancialPrivacy();
+                    },
                     onPeriodTap: () {
                       periodsAsync.whenData((periods) {
                         _showPeriodSelector(
@@ -175,7 +193,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   ),
                 ] else ...[
                   if (_selectedIndex == 2)
-                    ProfileTabBody(currentSnapshot: snapshot)
+                    const HistoryTabBody()
                   else
                     const SettingsTabBody(),
                 ],
@@ -264,7 +282,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       AppToast.show(context, context.tr('budget_adjusted_successfully'));
     } on StateError catch (error) {
       if (!mounted) return;
-      AppToast.show(context, error.message);
+      AppToast.show(context, context.tr(error.message));
     }
   }
 
@@ -348,7 +366,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       );
     } on StateError catch (error) {
       if (!mounted) return;
-      AppToast.show(context, error.message);
+      AppToast.show(context, context.tr(error.message));
     }
   }
 
@@ -727,10 +745,12 @@ class _DashboardFooter extends StatelessWidget {
               selectedIcon: Icons.account_balance_wallet,
               onTap: () => onChanged(1),
             ),
+            // ProfileTabBody tetap disimpan, tetapi akses dari footer
+            // dinonaktifkan sementara untuk memberi tempat pada Riwayat.
             _FooterIconButton(
               selected: selectedIndex == 2,
-              icon: Icons.person_outline_rounded,
-              selectedIcon: Icons.person_rounded,
+              icon: Icons.history_rounded,
+              selectedIcon: Icons.history_rounded,
               onTap: () => onChanged(2),
             ),
             _FooterIconButton(
@@ -925,7 +945,10 @@ class _PeriodSummaryInsightCard extends StatelessWidget {
                         label: context.tr('income'),
                         amount: totalIncome,
                         color: AppColors.secondary,
-                        icon: Icons.trending_up_rounded,
+                        leading: const TransactionTypeIcon(
+                          isIncome: true,
+                          size: 28,
+                        ),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -934,7 +957,10 @@ class _PeriodSummaryInsightCard extends StatelessWidget {
                         label: context.tr('expense'),
                         amount: totalExpense,
                         color: AppColors.danger,
-                        icon: Icons.trending_down_rounded,
+                        leading: const TransactionTypeIcon(
+                          isIncome: false,
+                          size: 28,
+                        ),
                       ),
                     ),
                   ],
@@ -1027,13 +1053,13 @@ class _SummaryInsightMetric extends StatelessWidget {
   final String label;
   final int amount;
   final Color color;
-  final IconData icon;
+  final Widget leading;
 
   const _SummaryInsightMetric({
     required this.label,
     required this.amount,
     required this.color,
-    required this.icon,
+    required this.leading,
   });
 
   @override
@@ -1047,7 +1073,7 @@ class _SummaryInsightMetric extends StatelessWidget {
       ),
       child: Row(
         children: [
-          Icon(icon, color: color, size: 20),
+          leading,
           const SizedBox(width: 8),
           Expanded(
             child: Column(
@@ -1224,19 +1250,9 @@ class _RecurringDueCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 42,
-              height: 42,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Icon(
-                template.type == TransactionType.income
-                    ? Icons.trending_up_rounded
-                    : Icons.trending_down_rounded,
-                color: color,
-              ),
+            TransactionTypeIcon(
+              isIncome: template.type == TransactionType.income,
+              size: 42,
             ),
             const SizedBox(width: 12),
             Expanded(

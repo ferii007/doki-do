@@ -3,6 +3,8 @@ import 'package:flutter/material.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/formatters/date_formatter.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
+import '../../../../../core/widgets/app_calendar.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../domain/entities/budget_period.dart';
 
@@ -43,37 +45,17 @@ class _PeriodEditSheetState extends State<PeriodEditSheet> {
 
   @override
   Widget build(BuildContext context) {
-    final dates = _visibleDates(_visibleMonth);
-    final dayNames = context.l10n.language.name == 'en'
-        ? const ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
-        : const ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
+    return AppSheetSurface(
+      child: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.34),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
+            AppSheetHeader(
+              title: context.tr('edit_financial_period'),
+              icon: Icons.edit_calendar_outlined,
             ),
             const SizedBox(height: 16),
-            Text(
-              context.tr('edit_financial_period'),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 12),
             Row(
               children: [
                 Expanded(
@@ -94,103 +76,12 @@ class _PeriodEditSheetState extends State<PeriodEditSheet> {
               ],
             ),
             const SizedBox(height: 12),
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(14),
-                border: Border.all(color: AppColors.border),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Row(
-                    children: [
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () => setState(() {
-                          _visibleMonth = DateTime(
-                            _visibleMonth.year,
-                            _visibleMonth.month - 1,
-                          );
-                        }),
-                        icon: const Icon(Icons.chevron_left_rounded),
-                      ),
-                      Expanded(
-                        child: Text(
-                          DateFormatter.monthYear(_visibleMonth),
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium
-                              ?.copyWith(
-                                color: AppColors.textPrimary,
-                                fontWeight: FontWeight.w900,
-                              ),
-                        ),
-                      ),
-                      IconButton(
-                        visualDensity: VisualDensity.compact,
-                        onPressed: () => setState(() {
-                          _visibleMonth = DateTime(
-                            _visibleMonth.year,
-                            _visibleMonth.month + 1,
-                          );
-                        }),
-                        icon: const Icon(Icons.chevron_right_rounded),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 6),
-                  Row(
-                    children: [
-                      for (final day in dayNames)
-                        Expanded(
-                          child: Text(
-                            day,
-                            textAlign: TextAlign.center,
-                            style: Theme.of(context).textTheme.labelSmall
-                                ?.copyWith(
-                                  color: AppColors.textSecondary,
-                                  fontWeight: FontWeight.w800,
-                                ),
-                          ),
-                        ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  GridView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: dates.length,
-                    gridDelegate:
-                        const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 7,
-                          mainAxisSpacing: 6,
-                          crossAxisSpacing: 6,
-                        ),
-                    itemBuilder: (context, index) {
-                      final date = dates[index];
-                      if (date == null) return const SizedBox.shrink();
-
-                      final disabled = _isDateOccupied(date);
-                      final selected =
-                          _isSameDate(date, _startDate) ||
-                          (_endDate != null && _isSameDate(date, _endDate!));
-                      final inRange =
-                          _endDate != null &&
-                          date.isAfter(_startDate) &&
-                          date.isBefore(_endDate!);
-
-                      return _CalendarDayCell(
-                        date: date,
-                        disabled: disabled,
-                        selected: selected,
-                        inRange: inRange,
-                        onTap: () => _handleDateTap(date),
-                      );
-                    },
-                  ),
-                ],
-              ),
+            AppCalendar(
+              initialVisibleMonth: _visibleMonth,
+              selectedStart: _startDate,
+              selectedEnd: _endDate,
+              isDateDisabled: _isDateOccupied,
+              onDateTap: _handleDateTap,
             ),
             const SizedBox(height: 16),
             SizedBox(
@@ -271,22 +162,6 @@ class _PeriodEditSheetState extends State<PeriodEditSheet> {
     );
   }
 
-  List<DateTime?> _visibleDates(DateTime visibleMonth) {
-    final firstDay = DateTime(visibleMonth.year, visibleMonth.month);
-    final daysInMonth = DateTime(
-      visibleMonth.year,
-      visibleMonth.month + 1,
-      0,
-    ).day;
-    final leadingEmptyCells = firstDay.weekday - 1;
-
-    return [
-      for (var i = 0; i < leadingEmptyCells; i++) null,
-      for (var day = 1; day <= daysInMonth; day++)
-        DateTime(visibleMonth.year, visibleMonth.month, day),
-    ];
-  }
-
   bool _isDateOccupied(DateTime date) {
     final normalizedDate = _dateOnly(date);
     return widget.periods.any((period) {
@@ -311,10 +186,6 @@ class _PeriodEditSheetState extends State<PeriodEditSheet> {
   DateTime _dateOnly(DateTime value) {
     return DateTime(value.year, value.month, value.day);
   }
-
-  bool _isSameDate(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
 }
 
 class _DateField extends StatelessWidget {
@@ -333,7 +204,7 @@ class _DateField extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.background,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
           color: active ? AppColors.secondary : AppColors.border,
@@ -363,61 +234,6 @@ class _DateField extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CalendarDayCell extends StatelessWidget {
-  final DateTime date;
-  final bool disabled;
-  final bool selected;
-  final bool inRange;
-  final VoidCallback onTap;
-
-  const _CalendarDayCell({
-    required this.date,
-    required this.disabled,
-    required this.selected,
-    required this.inRange,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final textColor = disabled
-        ? AppColors.textSecondary.withValues(alpha: 0.35)
-        : selected
-        ? Colors.white
-        : AppColors.textPrimary;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
-      onTap: disabled ? null : onTap,
-      child: Container(
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.primary
-              : inRange
-              ? AppColors.mintSurface
-              : Colors.transparent,
-          borderRadius: BorderRadius.circular(10),
-          border: Border.all(
-            color: disabled
-                ? AppColors.border.withValues(alpha: 0.4)
-                : selected
-                ? AppColors.primary
-                : Colors.transparent,
-          ),
-        ),
-        child: Text(
-          '${date.day}',
-          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-            color: textColor,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
       ),
     );
   }

@@ -29,34 +29,29 @@ class AppLocalizations {
   }
 
   String periodCount(int count) {
-    if (language == AppLanguage.id) return '$count periode tercatat';
-    return '$count recorded ${count == 1 ? 'period' : 'periods'}';
+    return trf(
+      count == 1 ? 'recorded_period_count_one' : 'recorded_period_count_many',
+      {'count': count},
+    );
   }
 
   String expenseRecordCount(int count) {
-    if (language == AppLanguage.id) return '$count catatan uang keluar';
-    return '$count expense ${count == 1 ? 'record' : 'records'}';
+    return trf(
+      count == 1 ? 'expense_record_count_one' : 'expense_record_count_many',
+      {'count': count},
+    );
   }
 
   String budgetDeleteMessage(String categoryName) {
-    if (language == AppLanguage.id) {
-      return 'Kategori "$categoryName" akan dihapus dari periode ini. Aksi ini tidak bisa dibatalkan.';
-    }
-    return 'Category "$categoryName" will be removed from this period. This action cannot be undone.';
+    return trf('budget_delete_message', {'name': categoryName});
   }
 
   String periodDeleteMessage(String periodLabel) {
-    if (language == AppLanguage.id) {
-      return 'Periode $periodLabel akan dihapus bersama seluruh kategori anggaran, uang masuk, uang keluar, dan riwayat perubahan di dalamnya. Aksi ini tidak bisa dibatalkan.';
-    }
-    return 'Period $periodLabel will be deleted with all budget categories, income, expenses, and adjustment history inside it. This action cannot be undone.';
+    return trf('period_delete_message', {'period': periodLabel});
   }
 
   String categoryDeleteMessage(String name) {
-    if (language == AppLanguage.id) {
-      return 'Rencana "$name" akan dihapus dari form periode ini.';
-    }
-    return 'Plan "$name" will be removed from this period form.';
+    return trf('category_plan_delete_message', {'name': name});
   }
 }
 
@@ -127,6 +122,8 @@ const _id = <String, String>{
   'amount': 'Jumlah Uang',
   'date': 'Tanggal',
   'financial_period': 'Periode Keuangan',
+  'hide_financial_amounts': 'Sembunyikan Nominal Keuangan',
+  'show_financial_amounts': 'Tampilkan Nominal Keuangan',
   'budget_category': 'Kategori Anggaran',
   'remaining_money_this_period': 'Sisa Uang Periode Ini',
   'record_income': 'Catat Uang Masuk',
@@ -209,6 +206,25 @@ const _id = <String, String>{
   'active_categories': 'Kategori Aktif',
   'income': 'Uang Masuk',
   'expense': 'Uang Keluar',
+  'activity_history': 'Riwayat Aktivitas',
+  'settings': 'Pengaturan',
+  'search': 'Cari',
+  'note': 'Catatan',
+  'activity_filter': 'Filter Aktivitas',
+  'activity_type': 'Jenis Aktivitas',
+  'this_week': 'Minggu Ini',
+  'this_month': 'Bulan Ini',
+  'last_month': 'Bulan Lalu',
+  'last_3_months': '3 Bulan Terakhir',
+  'yesterday': 'Kemarin',
+  'reset': 'Atur Ulang',
+  'apply_filter': 'Terapkan Filter',
+  'clear_search': 'Hapus Pencarian',
+  'all': 'Semua',
+  'budget_changes': 'Perubahan Anggaran',
+  'no_activity_history_yet': 'Belum Ada Riwayat Aktivitas',
+  'no_history_matches_the_filter':
+      'Tidak Ada Riwayat Yang Sesuai Dengan Pencarian Atau Filter',
   'this_period_is_still_on_track': 'Uang Periode Ini Masih Aman',
   'this_period_needs_attention': 'Uang Periode Ini Perlu Dicek',
   'account_profile': 'Profil Akun',
@@ -383,6 +399,11 @@ const _id = <String, String>{
   'amount_is_not_recalculated': 'Jumlah Tidak Dihitung Ulang',
   'end': 'Selesai',
   'choose_date': 'Pilih Tanggal',
+  'choose_date_range': 'Pilih Rentang Tanggal',
+  'custom_date_range': 'Rentang Tanggal Kustom',
+  'clear_date_range': 'Hapus Rentang Tanggal',
+  'filter_by_period': 'Filter Berdasarkan Periode',
+  'apply': 'Terapkan',
   'choose_date_2': 'Pilih Tanggal',
   'choose_start_and_end_date': 'Pilih Tanggal Mulai Dan Selesai',
   'start_date_value': 'Mulai {date}',
@@ -484,6 +505,123 @@ const _id = <String, String>{
       'Minimal, bersih, dan tenang untuk pencatatan rapi.',
   'bright_clean_with_a_bold_accent':
       'Cerah, bersih, dan punya aksen yang berani.',
+  'recorded_period_count_one': '{count} periode tercatat',
+  'recorded_period_count_many': '{count} periode tercatat',
+  'expense_record_count_one': '{count} catatan uang keluar',
+  'expense_record_count_many': '{count} catatan uang keluar',
+  'budget_delete_message':
+      'Kategori "{name}" akan dihapus dari periode ini. Aksi ini tidak bisa dibatalkan.',
+  'period_delete_message':
+      'Periode {period} akan dihapus bersama seluruh kategori anggaran, uang masuk, uang keluar, dan riwayat perubahan di dalamnya. Aksi ini tidak bisa dibatalkan.',
+  'category_plan_delete_message':
+      'Rencana "{name}" akan dihapus dari form periode ini.',
+  'language_indonesian': 'Indonesia',
+  'language_english': 'Inggris',
+  'currency_idr': 'Rupiah',
+  'currency_usd': 'Dolar AS',
+  'theme_teal_balance': 'Teal Seimbang',
+  'theme_fresh_mint': 'Mint Segar',
+  'theme_rose_ledger': 'Catatan Mawar',
+  'theme_sage_budget': 'Anggaran Sage',
+  'theme_soft_linen': 'Linen Lembut',
+  'theme_warm_signal': 'Sinyal Hangat',
+  'theme_lavender_calm': 'Lavender Tenang',
+  'theme_coastal_blue': 'Biru Pesisir',
+  'theme_electric_blue': 'Biru Elektrik',
+  'theme_blush_mauve': 'Mauve Lembut',
+  'theme_mint_glow': 'Kilau Mint',
+  'theme_olive_paper': 'Kertas Zaitun',
+  'theme_forest_mint': 'Mint Hutan',
+  'default_daily_needs': 'Kebutuhan Harian',
+  'legacy_default_basic_needs': 'Kebutuhan Pokok',
+  'default_savings_investment': 'Tabungan & Investasi',
+  'default_entertainment': 'Hiburan',
+  'default_others': 'Lain-Lain',
+  'formula_priority': 'Prioritas',
+  'formula_balanced': 'Seimbang',
+  'formula_all_to_one': 'Semua saldo masuk ke satu kategori',
+  'formula_main_then_other':
+      'Utamakan kategori utama, sisanya untuk kebutuhan lain',
+  'formula_main_and_support': 'Satu kategori utama, satu kategori pendukung',
+  'formula_two_important': 'Untuk dua kebutuhan yang sama-sama penting',
+  'formula_even_two': 'Dibagi rata untuk dua kategori',
+  'formula_almost_all_main': 'Hampir semua saldo untuk prioritas utama',
+  'formula_main_flexible_savings': 'Kebutuhan utama, fleksibel, dan tabungan',
+  'formula_main_two_balanced':
+      'Kebutuhan utama dengan dua kategori pendukung seimbang',
+  'formula_required_costs_high': 'Cocok saat biaya wajib sedang besar',
+  'formula_required_high_two_funded':
+      'Biaya wajib besar, dua kategori lain tetap terjaga',
+  'formula_lean_essential_high': 'Mode hemat saat biaya pokok tinggi',
+  'formula_most_required': 'Mayoritas saldo untuk kebutuhan wajib',
+  'formula_flexible_two_others':
+      'Lebih longgar untuk dua kategori selain kebutuhan utama',
+  'formula_needs_flexible_entertainment_others':
+      'Kebutuhan, fleksibel, hiburan, dan lain-lain',
+  'formula_503020_four': 'Adaptasi 50/30/20 dengan dua kategori pendukung',
+  'formula_balanced_four': 'Lebih seimbang untuk empat kategori',
+  'formula_large_flexible_two_small':
+      'Kategori fleksibel besar, dua kategori kecil seimbang',
+  'formula_high_required_controlled':
+      'Biaya wajib tinggi, kategori lain dikontrol',
+  'formula_603010_four': 'Adaptasi 60/30/10 dengan dua kategori kecil',
+  'formula_high_daily_expensive':
+      'Kebutuhan harian tinggi untuk biaya hidup mahal',
+  'formula_prioritize_required': 'Prioritas biaya wajib',
+  'formula_very_strict_main': 'Mode sangat ketat untuk prioritas utama',
+  'formula_even_four': 'Pembagian rata untuk empat kategori',
+  'formula_503020_five': 'Adaptasi 50/30/20 untuk lima kategori',
+  'formula_lighter_main': 'Prioritas utama lebih ringan',
+  'formula_dominant_required_small_reserve':
+      'Biaya wajib dominan dengan cadangan kecil',
+  'formula_lean_five': 'Mode hemat untuk lima kategori',
+  'formula_gradual_priority': 'Tangga prioritas bertahap',
+  'formula_first_larger_rest_even':
+      'Kategori pertama lebih besar, sisanya dibagi rata',
+  'formula_even_categories': 'Dibagi rata untuk {count} kategori',
+  'weekday_mon': 'Sen',
+  'weekday_tue': 'Sel',
+  'weekday_wed': 'Rab',
+  'weekday_thu': 'Kam',
+  'weekday_fri': 'Jum',
+  'weekday_sat': 'Sab',
+  'weekday_sun': 'Min',
+  'month_short_1': 'Jan',
+  'month_short_2': 'Feb',
+  'month_short_3': 'Mar',
+  'month_short_4': 'Apr',
+  'month_short_5': 'Mei',
+  'month_short_6': 'Jun',
+  'month_short_7': 'Jul',
+  'month_short_8': 'Agu',
+  'month_short_9': 'Sep',
+  'month_short_10': 'Okt',
+  'month_short_11': 'Nov',
+  'month_short_12': 'Des',
+  'month_long_1': 'Januari',
+  'month_long_2': 'Februari',
+  'month_long_3': 'Maret',
+  'month_long_4': 'April',
+  'month_long_5': 'Mei',
+  'month_long_6': 'Juni',
+  'month_long_7': 'Juli',
+  'month_long_8': 'Agustus',
+  'month_long_9': 'September',
+  'month_long_10': 'Oktober',
+  'month_long_11': 'November',
+  'month_long_12': 'Desember',
+  'error_budget_negative': 'Nominal anggaran tidak boleh kurang dari nol.',
+  'error_source_budget_insufficient':
+      'Nominal anggaran sumber tidak mencukupi.',
+  'error_budget_has_history': 'Anggaran sudah memiliki riwayat.',
+  'error_period_end_before_start':
+      'Tanggal selesai periode harus setelah tanggal mulai.',
+  'error_period_overlap':
+      'Tanggal yang dipilih bertabrakan dengan periode lain.',
+  'transfer_to_period': 'Transfer ke periode {period}',
+  'transfer_from_period': 'Transfer dari periode {period}',
+  'covered_by_period': 'Ditombok dari periode {period}',
+  'covering_period': 'Menombok periode {period}',
 };
 
 const _en = <String, String>{
@@ -532,6 +670,8 @@ const _en = <String, String>{
   'amount': 'Amount',
   'date': 'Date',
   'financial_period': 'Financial Period',
+  'hide_financial_amounts': 'Hide Financial Amounts',
+  'show_financial_amounts': 'Show Financial Amounts',
   'budget_category': 'Budget Category',
   'remaining_money_this_period': 'Remaining Money This Period',
   'record_income': 'Record Income',
@@ -614,6 +754,24 @@ const _en = <String, String>{
   'active_categories': 'Active Categories',
   'income': 'Income',
   'expense': 'Expense',
+  'activity_history': 'Activity History',
+  'settings': 'Settings',
+  'search': 'Search',
+  'note': 'Note',
+  'activity_filter': 'Activity Filter',
+  'activity_type': 'Activity Type',
+  'this_week': 'This Week',
+  'this_month': 'This Month',
+  'last_month': 'Last Month',
+  'last_3_months': 'Last 3 Months',
+  'yesterday': 'Yesterday',
+  'reset': 'Reset',
+  'apply_filter': 'Apply Filter',
+  'clear_search': 'Clear Search',
+  'all': 'All',
+  'budget_changes': 'Budget Changes',
+  'no_activity_history_yet': 'No Activity History Yet',
+  'no_history_matches_the_filter': 'No History Matches The Search Or Filter',
   'this_period_is_still_on_track': 'This Period Is Still On Track',
   'this_period_needs_attention': 'This Period Needs Attention',
   'account_profile': 'Account Profile',
@@ -788,6 +946,11 @@ const _en = <String, String>{
   'amount_is_not_recalculated': 'Amount Is Not Recalculated',
   'end': 'End',
   'choose_date': 'Choose Date',
+  'choose_date_range': 'Choose Date Range',
+  'custom_date_range': 'Custom Date Range',
+  'clear_date_range': 'Clear Date Range',
+  'filter_by_period': 'Filter By Period',
+  'apply': 'Apply',
   'choose_date_2': 'Choose Date',
   'choose_start_and_end_date': 'Choose Start And End Date',
   'start_date_value': 'Start {date}',
@@ -885,4 +1048,120 @@ const _en = <String, String>{
   'minimal_clean_and_calm_for_tidy_tracking':
       'Minimal, clean, and calm for tidy tracking.',
   'bright_clean_with_a_bold_accent': 'Bright, clean, with a bold accent.',
+  'recorded_period_count_one': '{count} recorded period',
+  'recorded_period_count_many': '{count} recorded periods',
+  'expense_record_count_one': '{count} expense record',
+  'expense_record_count_many': '{count} expense records',
+  'budget_delete_message':
+      'Category "{name}" will be removed from this period. This action cannot be undone.',
+  'period_delete_message':
+      'Period {period} will be deleted with all budget categories, income, expenses, and adjustment history inside it. This action cannot be undone.',
+  'category_plan_delete_message':
+      'Plan "{name}" will be removed from this period form.',
+  'language_indonesian': 'Indonesian',
+  'language_english': 'English',
+  'currency_idr': 'Indonesian Rupiah',
+  'currency_usd': 'US Dollar',
+  'theme_teal_balance': 'Teal Balance',
+  'theme_fresh_mint': 'Fresh Mint',
+  'theme_rose_ledger': 'Rose Ledger',
+  'theme_sage_budget': 'Sage Budget',
+  'theme_soft_linen': 'Soft Linen',
+  'theme_warm_signal': 'Warm Signal',
+  'theme_lavender_calm': 'Lavender Calm',
+  'theme_coastal_blue': 'Coastal Blue',
+  'theme_electric_blue': 'Electric Blue',
+  'theme_blush_mauve': 'Blush Mauve',
+  'theme_mint_glow': 'Mint Glow',
+  'theme_olive_paper': 'Olive Paper',
+  'theme_forest_mint': 'Forest Mint',
+  'default_daily_needs': 'Daily Needs',
+  'legacy_default_basic_needs': 'Basic Needs',
+  'default_savings_investment': 'Savings & Investment',
+  'default_entertainment': 'Entertainment',
+  'default_others': 'Others',
+  'formula_priority': 'Priority',
+  'formula_balanced': 'Balanced',
+  'formula_all_to_one': 'All balance goes to one category',
+  'formula_main_then_other':
+      'Prioritize the main category, keep the rest for another need',
+  'formula_main_and_support': 'One main category and one supporting category',
+  'formula_two_important': 'For two categories that are both important',
+  'formula_even_two': 'Split evenly between two categories',
+  'formula_almost_all_main': 'Almost all balance goes to the main priority',
+  'formula_main_flexible_savings': 'Main needs, flexible spending, and savings',
+  'formula_main_two_balanced':
+      'Main needs with two balanced supporting categories',
+  'formula_required_costs_high': 'Useful when required costs are high',
+  'formula_required_high_two_funded':
+      'High required costs while keeping two other categories funded',
+  'formula_lean_essential_high': 'Lean mode when essential costs are high',
+  'formula_most_required': 'Most balance goes to required needs',
+  'formula_flexible_two_others':
+      'More flexible for two categories outside main needs',
+  'formula_needs_flexible_entertainment_others':
+      'Needs, flexible spending, entertainment, and others',
+  'formula_503020_four': '50/30/20 adaptation with two supporting categories',
+  'formula_balanced_four': 'More balanced for four categories',
+  'formula_large_flexible_two_small':
+      'Large flexible category with two smaller balanced categories',
+  'formula_high_required_controlled':
+      'High required costs while controlling other categories',
+  'formula_603010_four': '60/30/10 adaptation with two smaller categories',
+  'formula_high_daily_expensive':
+      'High essential needs for expensive living costs',
+  'formula_prioritize_required': 'Prioritize required costs',
+  'formula_very_strict_main': 'Very strict mode for the main priority',
+  'formula_even_four': 'Even split across four categories',
+  'formula_503020_five': '50/30/20 adaptation for five categories',
+  'formula_lighter_main': 'Lighter main priority',
+  'formula_dominant_required_small_reserve':
+      'Dominant required costs with small reserves',
+  'formula_lean_five': 'Lean mode for five categories',
+  'formula_gradual_priority': 'Gradual priority ladder',
+  'formula_first_larger_rest_even':
+      'The first category gets more, the rest is split evenly',
+  'formula_even_categories': 'Split evenly across {count} categories',
+  'weekday_mon': 'Mon',
+  'weekday_tue': 'Tue',
+  'weekday_wed': 'Wed',
+  'weekday_thu': 'Thu',
+  'weekday_fri': 'Fri',
+  'weekday_sat': 'Sat',
+  'weekday_sun': 'Sun',
+  'month_short_1': 'Jan',
+  'month_short_2': 'Feb',
+  'month_short_3': 'Mar',
+  'month_short_4': 'Apr',
+  'month_short_5': 'May',
+  'month_short_6': 'Jun',
+  'month_short_7': 'Jul',
+  'month_short_8': 'Aug',
+  'month_short_9': 'Sep',
+  'month_short_10': 'Oct',
+  'month_short_11': 'Nov',
+  'month_short_12': 'Dec',
+  'month_long_1': 'January',
+  'month_long_2': 'February',
+  'month_long_3': 'March',
+  'month_long_4': 'April',
+  'month_long_5': 'May',
+  'month_long_6': 'June',
+  'month_long_7': 'July',
+  'month_long_8': 'August',
+  'month_long_9': 'September',
+  'month_long_10': 'October',
+  'month_long_11': 'November',
+  'month_long_12': 'December',
+  'error_budget_negative': 'Budget amount cannot be less than zero.',
+  'error_source_budget_insufficient':
+      'The source budget amount is insufficient.',
+  'error_budget_has_history': 'The budget already has history.',
+  'error_period_end_before_start':
+      'The period end date must be after the start date.',
+  'error_period_overlap': 'The selected dates overlap with another period.',
+  'transfer_to_period': 'Transfer to period {period}',
+  'transfer_from_period': 'Transfer from period {period}',
+  'covered_by_period': 'Covered by period {period}',
+  'covering_period': 'Covering period {period}',
 };

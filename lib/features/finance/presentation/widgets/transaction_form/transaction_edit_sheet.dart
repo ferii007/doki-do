@@ -5,7 +5,10 @@ import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/formatters/currency_input_formatter.dart';
 import '../../../../../core/formatters/date_formatter.dart';
 import '../../../../../core/formatters/rupiah_formatter.dart';
+import '../../../../../core/layout/app_spacing.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/widgets/app_calendar.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../domain/entities/category_budget.dart';
 import '../../../domain/entities/transaction_item.dart';
@@ -89,85 +92,69 @@ class _TransactionEditSheetState extends State<TransactionEditSheet> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.sizeOf(context).height;
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 18,
-        ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: screenHeight * 0.82),
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.34),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
+    return AppSheetSurface(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 10,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 18,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: screenHeight * 0.82),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSheetHeader(
+                title: context.tr(_isExpense ? 'edit_expense' : 'edit_income'),
+                icon: Icons.edit_note_rounded,
+              ),
+              const AppFormControlGap(),
+              if (_isExpense) ...[
+                _FocusOnlyLabelCategoryField(
+                  categories: widget.categories,
+                  selectedCategoryId: _categoryId,
+                  focusNode: _categoryFocusNode,
+                  onChanged: (value) => setState(() => _categoryId = value),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  context.tr(_isExpense ? 'edit_expense' : 'edit_income'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                if (_isExpense) ...[
-                  _FocusOnlyLabelCategoryField(
-                    categories: widget.categories,
-                    selectedCategoryId: _categoryId,
-                    focusNode: _categoryFocusNode,
-                    onChanged: (value) => setState(() => _categoryId = value),
-                  ),
-                  const SizedBox(height: 12),
-                ],
-                _FocusOnlyLabelTextField(
-                  controller: _amountController,
-                  focusNode: _amountFocusNode,
-                  label: context.tr('amount'),
-                  prefixText: CurrencyFormatterPreference.current.symbol,
-                  keyboardType: TextInputType.number,
-                  inputFormatters: [CurrencyInputFormatter()],
-                ),
-                const SizedBox(height: 12),
-                _FocusOnlyLabelTextField(
-                  controller: _titleController,
-                  focusNode: _titleFocusNode,
-                  label: context.tr(
-                    _isExpense
-                        ? 'what_was_it_used_for'
-                        : 'where_did_this_money_come_from',
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _EditDateField(
-                  date: _date,
-                  firstDate: widget.firstDate,
-                  lastDate: widget.lastDate,
-                  onChanged: (value) => setState(() => _date = value),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _submit,
-                    child: Text(context.tr('save_changes')),
-                  ),
-                ),
+                const AppFormFieldGap(),
               ],
-            ),
+              _FocusOnlyLabelTextField(
+                controller: _amountController,
+                focusNode: _amountFocusNode,
+                label: context.tr('amount'),
+                prefixText: CurrencyFormatterPreference.current.symbol,
+                keyboardType: TextInputType.number,
+                inputFormatters: [CurrencyInputFormatter()],
+              ),
+              const AppFormFieldGap(),
+              _FocusOnlyLabelTextField(
+                controller: _titleController,
+                focusNode: _titleFocusNode,
+                label: context.tr(
+                  _isExpense
+                      ? 'what_was_it_used_for'
+                      : 'where_did_this_money_come_from',
+                ),
+              ),
+              const AppFormFieldGap(),
+              _EditDateField(
+                date: _date,
+                firstDate: widget.firstDate,
+                lastDate: widget.lastDate,
+                onChanged: (value) => setState(() => _date = value),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _submit,
+                  child: Text(context.tr('save_changes')),
+                ),
+              ),
+            ],
           ),
         ),
       ),
@@ -241,7 +228,7 @@ class _FocusOnlyLabelTextField extends StatelessWidget {
             ? null
             : const BoxConstraints(minWidth: 52),
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.background,
         labelStyle: TextStyle(color: AppColors.textSecondary),
         floatingLabelStyle: TextStyle(
           color: AppColors.primary,
@@ -323,7 +310,7 @@ class _EditDateField extends StatelessWidget {
     return InkWell(
       borderRadius: BorderRadius.circular(8),
       onTap: () async {
-        final selected = await showDatePicker(
+        final selected = await showAppDatePicker(
           context: context,
           initialDate: _clampDate(date, firstDate, lastDate),
           firstDate: firstDate,
@@ -337,7 +324,7 @@ class _EditDateField extends StatelessWidget {
           labelText: context.tr('date'),
           floatingLabelBehavior: FloatingLabelBehavior.always,
           filled: true,
-          fillColor: Colors.white,
+          fillColor: AppColors.background,
           border: const OutlineInputBorder(),
           suffixIcon: const Icon(Icons.calendar_today_outlined),
           labelStyle: TextStyle(color: AppColors.textSecondary),

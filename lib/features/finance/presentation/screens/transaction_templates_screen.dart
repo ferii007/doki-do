@@ -11,6 +11,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/transaction_template.dart';
 import '../../domain/entities/transaction_type.dart';
 import '../providers/transaction_template_provider.dart';
+import '../widgets/transaction_type_icon.dart';
 
 class TransactionTemplatesScreen extends ConsumerWidget {
   const TransactionTemplatesScreen({super.key});
@@ -169,20 +170,9 @@ class _TemplateCard extends ConsumerWidget {
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: color.withValues(alpha: 0.12),
-              borderRadius: BorderRadius.circular(15),
-            ),
-            child: Icon(
-              template.type == TransactionType.income
-                  ? Icons.trending_up_rounded
-                  : Icons.trending_down_rounded,
-              color: color,
-              size: 22,
-            ),
+          TransactionTypeIcon(
+            isIncome: template.type == TransactionType.income,
+            size: 44,
           ),
           const SizedBox(width: 12),
           Expanded(

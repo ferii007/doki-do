@@ -9,7 +9,9 @@ import '../../../../app/theme/app_theme_palette.dart';
 import '../../../../core/formatters/currency_input_formatter.dart';
 import '../../../../core/formatters/date_formatter.dart';
 import '../../../../core/formatters/rupiah_formatter.dart';
+import '../../../../core/layout/app_spacing.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/app_calendar.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../finance/domain/entities/budget_allocation_draft.dart';
 import '../../../finance/presentation/providers/transaction_action_provider.dart';
@@ -44,9 +46,9 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
   final _amountController = TextEditingController();
   final _sourceController = TextEditingController();
   final _categoryControllers = <TextEditingController>[
-    TextEditingController(text: 'Kebutuhan Harian'),
-    TextEditingController(text: 'Hiburan'),
-    TextEditingController(text: 'Lain-Lain'),
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
   ];
   final _customPercentageControllers = <TextEditingController>[
     TextEditingController(),
@@ -84,6 +86,10 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     _themeId = widget.initialSettings.themeId;
     _language = widget.initialSettings.language;
     _currency = widget.initialSettings.currency;
+    final copy = AppLocalizations(_language);
+    _categoryControllers[0].text = copy.tr('default_daily_needs');
+    _categoryControllers[1].text = copy.tr('default_entertainment');
+    _categoryControllers[2].text = copy.tr('default_others');
     final now = DateTime.now();
     _startDate = DateTime(now.year, now.month, now.day);
     _endDate = _startDate!.add(const Duration(days: 30));
@@ -640,8 +646,14 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
         ];
       default:
         return [
-          _FormulaTemplate('Prioritas', _priorityPercentages(count)),
-          _FormulaTemplate('Seimbang', _equalPercentages(count)),
+          _FormulaTemplate(
+            context.tr('formula_priority'),
+            _priorityPercentages(count),
+          ),
+          _FormulaTemplate(
+            context.tr('formula_balanced'),
+            _equalPercentages(count),
+          ),
         ];
     }
   }
@@ -676,14 +688,11 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
     DateTime? minimumDate,
     DateTime? maximumDate,
   }) async {
-    final result = await showModalBottomSheet<DateTime>(
+    final result = await showAppDatePicker(
       context: context,
-      isScrollControlled: true,
-      builder: (_) => _DatePickerSheet(
-        initialDate: initialDate,
-        minimumDate: minimumDate,
-        maximumDate: maximumDate,
-      ),
+      initialDate: initialDate,
+      firstDate: minimumDate,
+      lastDate: maximumDate,
     );
 
     if (result == null || !mounted) return;
@@ -1190,7 +1199,7 @@ class _PreferenceStep extends StatelessWidget {
               Expanded(
                 child: _ChoiceCard(
                   icon: Icons.translate_rounded,
-                  label: language.label,
+                  label: context.tr(language.labelKey),
                   selected: selectedLanguage == language,
                   onTap: () => onLanguageChanged(language),
                 ),
@@ -1208,7 +1217,7 @@ class _PreferenceStep extends StatelessWidget {
             for (final currency in AppCurrency.values) ...[
               _ChoiceCard(
                 icon: Icons.payments_rounded,
-                label: '${currency.code} • ${currency.label}',
+                label: '${currency.code} • ${context.tr(currency.labelKey)}',
                 selected: selectedCurrency == currency,
                 onTap: () => onCurrencyChanged(currency),
               ),
@@ -1301,14 +1310,14 @@ class _BalanceStep extends StatelessWidget {
       totalSteps: totalSteps,
       children: [
         AmountInput(controller: amountController),
-        const SizedBox(height: 12),
+        const AppFormFieldGap(),
         _FloatingOnlyTextField(
           controller: sourceController,
           hintText: context.tr('example_main_salary_freelance_bonus'),
           label: context.tr('opening_balance_source'),
           icon: Icons.source_rounded,
         ),
-        const SizedBox(height: 12),
+        const AppFormControlGap(),
         _DateOptionCard(
           icon: Icons.event_available_rounded,
           title: context.tr('received_date'),
@@ -1356,14 +1365,14 @@ class _CategoryStep extends StatelessWidget {
             ),
           ],
         ),
-        const SizedBox(height: 8),
+        const AppFormControlGap(),
         for (var index = 0; index < controllers.length; index++) ...[
           _CategoryField(
             controller: controllers[index],
             canDelete: controllers.length > 1,
             onDelete: () => onRemove(index),
           ),
-          const SizedBox(height: 10),
+          if (index != controllers.length - 1) const AppFormFieldGap(),
         ],
       ],
     );
@@ -1451,7 +1460,7 @@ class _AllocationStep extends StatelessWidget {
                   : 'custom_amount',
             ),
           ),
-          const SizedBox(height: 10),
+          const AppFormControlGap(),
           for (var index = 0; index < allocations.length; index++) ...[
             customMode == _CustomAllocationMode.percentage
                 ? _CustomPercentageField(
@@ -1462,7 +1471,7 @@ class _AllocationStep extends StatelessWidget {
                     name: allocations[index].name,
                     controller: customAmountControllers[index],
                   ),
-            if (index != allocations.length - 1) const SizedBox(height: 10),
+            if (index != allocations.length - 1) const AppFormFieldGap(),
           ],
         ],
         const SizedBox(height: 8),
@@ -1519,11 +1528,14 @@ class _ReviewStep extends StatelessWidget {
         _ReviewCard(
           rows: [
             _ReviewRowData(context.tr('name'), displayName),
-            _ReviewRowData(context.tr('theme'), palette.name),
-            _ReviewRowData(context.tr('language'), language.label),
+            _ReviewRowData(context.tr('theme'), context.tr(palette.nameKey)),
+            _ReviewRowData(
+              context.tr('language'),
+              context.tr(language.labelKey),
+            ),
             _ReviewRowData(
               context.tr('currency'),
-              '${currency.code} • ${currency.label}',
+              '${currency.code} • ${context.tr(currency.labelKey)}',
             ),
             _ReviewRowData(
               context.tr('period'),
@@ -1607,7 +1619,7 @@ class _PaletteOptionCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    palette.name,
+                    context.tr(palette.nameKey),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                       color: AppColors.textPrimary,
                       fontWeight: FontWeight.w900,
@@ -2309,222 +2321,6 @@ class _ReviewCard extends StatelessWidget {
               ),
           ],
         ],
-      ),
-    );
-  }
-}
-
-class _DatePickerSheet extends StatefulWidget {
-  final DateTime initialDate;
-  final DateTime? minimumDate;
-  final DateTime? maximumDate;
-
-  const _DatePickerSheet({
-    required this.initialDate,
-    this.minimumDate,
-    this.maximumDate,
-  });
-
-  @override
-  State<_DatePickerSheet> createState() => _DatePickerSheetState();
-}
-
-class _DatePickerSheetState extends State<_DatePickerSheet> {
-  static const _dayNamesId = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-  static const _dayNamesEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-  late DateTime _visibleMonth;
-
-  @override
-  void initState() {
-    super.initState();
-    _visibleMonth = DateTime(widget.initialDate.year, widget.initialDate.month);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    final dayNames = context.l10n.language == AppLanguage.en
-        ? _dayNamesEn
-        : _dayNamesId;
-
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Container(
-              width: 42,
-              height: 4,
-              decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.34),
-                borderRadius: BorderRadius.circular(99),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Row(
-              children: [
-                IconButton(
-                  onPressed: () => setState(() {
-                    _visibleMonth = DateTime(
-                      _visibleMonth.year,
-                      _visibleMonth.month - 1,
-                    );
-                  }),
-                  icon: const Icon(Icons.chevron_left_rounded),
-                  color: Colors.white,
-                ),
-                Expanded(
-                  child: Text(
-                    DateFormatter.monthYear(_visibleMonth),
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => setState(() {
-                    _visibleMonth = DateTime(
-                      _visibleMonth.year,
-                      _visibleMonth.month + 1,
-                    );
-                  }),
-                  icon: const Icon(Icons.chevron_right_rounded),
-                  color: Colors.white,
-                ),
-              ],
-            ),
-            const SizedBox(height: 10),
-            Row(
-              children: [
-                for (final day in dayNames)
-                  Expanded(
-                    child: Center(
-                      child: Text(
-                        day,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: Colors.white.withValues(alpha: 0.72),
-                          fontWeight: FontWeight.w800,
-                        ),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-            const SizedBox(height: 8),
-            GridView.count(
-              crossAxisCount: 7,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              mainAxisSpacing: 6,
-              crossAxisSpacing: 6,
-              children: [
-                for (final date in _visibleDates(_visibleMonth))
-                  if (date == null)
-                    const SizedBox.shrink()
-                  else
-                    _CalendarDayButton(
-                      date: date,
-                      selected: _isSameDate(date, widget.initialDate),
-                      disabled: _isDisabled(date),
-                      onTap: () => Navigator.pop(context, date),
-                    ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  List<DateTime?> _visibleDates(DateTime visibleMonth) {
-    final firstDay = DateTime(visibleMonth.year, visibleMonth.month);
-    final daysInMonth = DateTime(
-      visibleMonth.year,
-      visibleMonth.month + 1,
-      0,
-    ).day;
-    final leadingEmptyCells = firstDay.weekday - 1;
-
-    return [
-      for (var i = 0; i < leadingEmptyCells; i++) null,
-      for (var day = 1; day <= daysInMonth; day++)
-        DateTime(visibleMonth.year, visibleMonth.month, day),
-    ];
-  }
-
-  bool _isDisabled(DateTime date) {
-    final value = DateTime(date.year, date.month, date.day);
-    final minimum = widget.minimumDate == null
-        ? null
-        : DateTime(
-            widget.minimumDate!.year,
-            widget.minimumDate!.month,
-            widget.minimumDate!.day,
-          );
-    final maximum = widget.maximumDate == null
-        ? null
-        : DateTime(
-            widget.maximumDate!.year,
-            widget.maximumDate!.month,
-            widget.maximumDate!.day,
-          );
-
-    if (minimum != null && value.isBefore(minimum)) return true;
-    if (maximum != null && value.isAfter(maximum)) return true;
-    return false;
-  }
-
-  bool _isSameDate(DateTime a, DateTime b) {
-    return a.year == b.year && a.month == b.month && a.day == b.day;
-  }
-}
-
-class _CalendarDayButton extends StatelessWidget {
-  final DateTime date;
-  final bool selected;
-  final bool disabled;
-  final VoidCallback onTap;
-
-  const _CalendarDayButton({
-    required this.date,
-    required this.selected,
-    required this.disabled,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(12),
-      onTap: disabled ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 140),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: selected
-              ? AppColors.mint
-              : Colors.white.withValues(alpha: disabled ? 0.08 : 0.14),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(
-            color: selected
-                ? Colors.white
-                : Colors.white.withValues(alpha: disabled ? 0.06 : 0.12),
-          ),
-        ),
-        child: Text(
-          '${date.day}',
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-            color: disabled
-                ? Colors.white.withValues(alpha: 0.28)
-                : selected
-                ? AppColors.overlay
-                : Colors.white,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
       ),
     );
   }

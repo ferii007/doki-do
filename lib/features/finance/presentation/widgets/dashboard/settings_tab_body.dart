@@ -7,6 +7,7 @@ import '../../../../../app/router.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../app/theme/app_theme_palette.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../../settings/domain/entities/app_currency.dart';
 import '../../../../settings/domain/entities/app_language.dart';
@@ -34,19 +35,20 @@ class SettingsTabBody extends ConsumerWidget {
               _SettingsOptionRow(
                 icon: Icons.palette_rounded,
                 label: context.tr('color_theme'),
-                value: value.themePalette.name,
+                value: context.tr(value.themePalette.nameKey),
                 onTap: () => _showThemeSheet(context, ref, value),
               ),
               _SettingsOptionRow(
                 icon: Icons.translate_rounded,
                 label: context.tr('language'),
-                value: value.language.label,
+                value: context.tr(value.language.labelKey),
                 onTap: () => _showLanguageSheet(context, ref, value),
               ),
               _SettingsOptionRow(
                 icon: Icons.attach_money_rounded,
                 label: context.tr('currency'),
-                value: '${value.currency.code} • ${value.currency.label}',
+                value:
+                    '${value.currency.code} • ${context.tr(value.currency.labelKey)}',
                 onTap: () => _showCurrencySheet(context, ref, value),
               ),
               _SettingsOptionRow(
@@ -185,7 +187,7 @@ class SettingsTabBody extends ConsumerWidget {
           for (final palette in AppThemePalettes.values)
             _PreferenceOption(
               value: palette,
-              title: palette.name,
+              title: context.tr(palette.nameKey),
               subtitle: context.tr(palette.description),
               swatches: [
                 palette.primary,
@@ -221,7 +223,7 @@ class SettingsTabBody extends ConsumerWidget {
           for (final language in AppLanguage.values)
             _PreferenceOption(
               value: language,
-              title: language.label,
+              title: context.tr(language.labelKey),
               subtitle: language.code.toUpperCase(),
               icon: Icons.translate_rounded,
             ),
@@ -253,7 +255,7 @@ class SettingsTabBody extends ConsumerWidget {
             _PreferenceOption(
               value: currency,
               title: currency.code,
-              subtitle: currency.label,
+              subtitle: context.tr(currency.labelKey),
               icon: Icons.payments_rounded,
             ),
         ],
@@ -378,11 +380,7 @@ class _AccountProfileCard extends StatelessWidget {
 }
 
 String _localizedUserType(BuildContext context, String value) {
-  if (value == 'Pengguna dengan periode keuangan fleksibel' ||
-      value == 'User with flexible financial periods') {
-    return context.tr('flexible_financial_period_user');
-  }
-  return value;
+  return value == 'flexible_financial_period_user' ? context.tr(value) : value;
 }
 
 class _SettingsSection extends StatelessWidget {
@@ -673,49 +671,29 @@ class _PreferenceSheet<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 18),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.22),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
+    return AppSheetSurface(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppSheetHeader(title: title, icon: Icons.tune_rounded),
+          const SizedBox(height: 14),
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: options.length,
+              separatorBuilder: (_, _) => const SizedBox(height: 8),
+              itemBuilder: (context, index) {
+                final option = options[index];
+                return _PreferenceOptionCard<T>(
+                  option: option,
+                  selected: option.value == selected,
+                  onTap: () => onSelected(option.value),
+                );
+              },
             ),
-            const SizedBox(height: 16),
-            Text(
-              title,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 12),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: options.length,
-                separatorBuilder: (_, _) => const SizedBox(height: 8),
-                itemBuilder: (context, index) {
-                  final option = options[index];
-                  return _PreferenceOptionCard<T>(
-                    option: option,
-                    selected: option.value == selected,
-                    onTap: () => onSelected(option.value),
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -734,20 +712,18 @@ class _PreferenceOptionCard<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(14),
+    return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
-              ? Colors.white.withValues(alpha: 0.16)
-              : Colors.white.withValues(alpha: 0.08),
+              ? AppColors.primary.withValues(alpha: 0.08)
+              : AppColors.background,
           borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected
-                ? Colors.white.withValues(alpha: 0.34)
-                : Colors.white.withValues(alpha: 0.12),
+            color: selected ? AppColors.primary : AppColors.border,
           ),
         ),
         child: Row(
@@ -759,10 +735,10 @@ class _PreferenceOptionCard<T> extends StatelessWidget {
                 width: 38,
                 height: 38,
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.12),
+                  color: AppColors.mintSurface,
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(option.icon, color: Colors.white, size: 20),
+                child: Icon(option.icon, color: AppColors.primary, size: 20),
               ),
             const SizedBox(width: 12),
             Expanded(
@@ -772,15 +748,15 @@ class _PreferenceOptionCard<T> extends StatelessWidget {
                   Text(
                     option.title,
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: Colors.white,
-                      fontWeight: FontWeight.w900,
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w800,
                     ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     option.subtitle,
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Colors.white.withValues(alpha: 0.72),
+                      color: AppColors.textSecondary,
                       fontWeight: FontWeight.w600,
                     ),
                   ),
@@ -788,7 +764,7 @@ class _PreferenceOptionCard<T> extends StatelessWidget {
               ),
             ),
             if (selected)
-              const Icon(Icons.check_circle_rounded, color: Colors.white),
+              Icon(Icons.check_circle_rounded, color: AppColors.primary),
           ],
         ),
       ),

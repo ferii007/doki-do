@@ -5,12 +5,13 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/formatters/currency_input_formatter.dart';
 import '../../../../core/formatters/date_formatter.dart';
 import '../../../../core/formatters/rupiah_formatter.dart';
+import '../../../../core/layout/app_spacing.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/app_calendar.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/delete_confirmation_dialog.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
-import '../../../settings/domain/entities/app_language.dart';
 import '../../domain/entities/budget_allocation_draft.dart';
 import '../../domain/entities/budget_period.dart';
 import '../../domain/entities/budget_snapshot.dart';
@@ -27,15 +28,12 @@ class AddPeriodScreen extends ConsumerStatefulWidget {
 }
 
 class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
-  static const _dayNamesId = ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'];
-  static const _dayNamesEn = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
   final _amountController = TextEditingController();
   final _sourceController = TextEditingController();
   final _budgetNameControllers = <TextEditingController>[
-    TextEditingController(text: 'Kebutuhan Pokok'),
-    TextEditingController(text: 'Tabungan & Inventasi'),
-    TextEditingController(text: 'Hiburan'),
+    TextEditingController(),
+    TextEditingController(),
+    TextEditingController(),
   ];
   final _customPercentageControllers = <TextEditingController>[
     TextEditingController(),
@@ -57,6 +55,7 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
   bool _useCustomFormula = false;
   bool _transferPreviousRemaining = true;
   _CustomFormulaMode _customFormulaMode = _CustomFormulaMode.percentage;
+  bool _localizedDefaultsInitialized = false;
 
   @override
   void initState() {
@@ -71,6 +70,16 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
     ]) {
       controller.addListener(_refreshPreview);
     }
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (_localizedDefaultsInitialized) return;
+    _localizedDefaultsInitialized = true;
+    _budgetNameControllers[0].text = context.tr('default_daily_needs');
+    _budgetNameControllers[1].text = context.tr('default_savings_investment');
+    _budgetNameControllers[2].text = context.tr('default_entertainment');
   }
 
   @override
@@ -121,9 +130,6 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
               ? carryOverCandidate.amount
               : 0;
           final totalFunding = _initialIncome + carryOverAmount;
-          final dayNames = context.l10n.language == AppLanguage.en
-              ? _dayNamesEn
-              : _dayNamesId;
           final allocations = _useCustomFormula
               ? _buildCustomAllocations(budgetNames, totalFunding)
               : _buildAllocations(
@@ -142,60 +148,22 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
             children: [
               _SelectedRangeCard(startDate: _startDate, endDate: _endDate),
               const SizedBox(height: 12),
-              _CalendarHeader(
-                label: DateFormatter.monthYear(visibleMonth),
-                onPrevious: () {
-                  setState(() {
-                    _visibleMonth = DateTime(
-                      visibleMonth.year,
-                      visibleMonth.month - 1,
-                    );
-                  });
-                },
-                onNext: () {
-                  setState(() {
-                    _visibleMonth = DateTime(
-                      visibleMonth.year,
-                      visibleMonth.month + 1,
-                    );
-                  });
-                },
+              AppCalendar(
+                initialVisibleMonth: visibleMonth,
+                selectedStart: _startDate,
+                selectedEnd: _endDate,
+                isDateDisabled: (date) => _isDateOccupied(periods, date),
+                onDateTap: (date) => _handleDateTap(periods, date),
               ),
-              const SizedBox(height: 12),
-              Row(
-                children: [
-                  for (final day in dayNames)
-                    Expanded(
-                      child: Center(
-                        child: Text(
-                          day,
-                          style: Theme.of(context).textTheme.labelSmall
-                              ?.copyWith(
-                                color: AppColors.textSecondary,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              _CalendarGrid(
-                dates: _visibleDates(visibleMonth),
-                isDisabled: (date) => _isDateOccupied(periods, date),
-                isSelected: _isSelected,
-                isInRange: _isInSelectedRange,
-                onTap: (date) => _handleDateTap(periods, date),
-              ),
-              const SizedBox(height: 16),
+              const AppFormControlGap(),
               AmountInput(controller: _amountController),
-              const SizedBox(height: 12),
+              const AppFormFieldGap(),
               TransactionNoteField(
                 controller: _sourceController,
                 label: context.tr('opening_balance_source_2'),
               ),
               if (carryOverCandidate != null) ...[
-                const SizedBox(height: 12),
+                const AppFormControlGap(),
                 _CarryOverCard(
                   candidate: carryOverCandidate,
                   selected: _transferPreviousRemaining,
@@ -203,13 +171,13 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
                       setState(() => _transferPreviousRemaining = value),
                 ),
               ],
-              const SizedBox(height: 18),
+              const AppFormControlGap(),
               _SectionHeader(
                 title: context.tr('initial_budget_plan'),
                 actionLabel: context.tr('add'),
                 onActionTap: _addDefaultBudget,
               ),
-              const SizedBox(height: 10),
+              const AppFormControlGap(),
               for (
                 var index = 0;
                 index < _budgetNameControllers.length;
@@ -222,7 +190,7 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
                   onDelete: () => _confirmRemoveDefaultBudget(index),
                 ),
                 if (index != _budgetNameControllers.length - 1)
-                  const SizedBox(height: 8),
+                  const AppFormFieldGap(),
               ],
               const SizedBox(height: 18),
               _SectionHeader(title: context.tr('how_to_split_the_balance')),
@@ -257,7 +225,7 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
                     }
                   }),
                 ),
-                const SizedBox(height: 10),
+                const AppFormControlGap(),
                 for (var index = 0; index < budgetNames.length; index++) ...[
                   _CustomAllocationField(
                     name: budgetNames[index],
@@ -267,8 +235,7 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
                         : _customAmountControllers[index],
                     mode: _customFormulaMode,
                   ),
-                  if (index != budgetNames.length - 1)
-                    const SizedBox(height: 8),
+                  if (index != budgetNames.length - 1) const AppFormFieldGap(),
                 ],
               ],
               const SizedBox(height: 14),
@@ -519,301 +486,126 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
     BuildContext context,
     int categoryCount,
   ) {
-    final isEn = context.l10n.language == AppLanguage.en;
+    _FormulaTemplate formula(
+      String name,
+      String descriptionKey,
+      List<int> percentages,
+    ) {
+      return _FormulaTemplate(
+        name: name,
+        description: context.tr(descriptionKey),
+        percentages: percentages,
+      );
+    }
+
     switch (categoryCount) {
       case 1:
         return [
-          _FormulaTemplate(
-            name: '100',
-            description: _formulaCopy(
-              isEn,
-              id: 'Semua saldo masuk ke satu kategori',
-              en: 'All balance goes to one category',
-            ),
-            percentages: [100],
-          ),
+          formula('100', 'formula_all_to_one', [100]),
         ];
       case 2:
         return [
-          _FormulaTemplate(
-            name: '80/20',
-            description: _formulaCopy(
-              isEn,
-              id: 'Utamakan kategori utama, sisanya untuk kebutuhan lain',
-              en: 'Prioritize the main category, keep the rest for another need',
-            ),
-            percentages: [80, 20],
-          ),
-          _FormulaTemplate(
-            name: '70/30',
-            description: _formulaCopy(
-              isEn,
-              id: 'Satu kategori utama, satu kategori pendukung',
-              en: 'One main category and one supporting category',
-            ),
-            percentages: [70, 30],
-          ),
-          _FormulaTemplate(
-            name: '60/40',
-            description: _formulaCopy(
-              isEn,
-              id: 'Untuk dua kebutuhan yang sama-sama penting',
-              en: 'For two categories that are both important',
-            ),
-            percentages: [60, 40],
-          ),
-          _FormulaTemplate(
-            name: '50/50',
-            description: _formulaCopy(
-              isEn,
-              id: 'Dibagi rata untuk dua kategori',
-              en: 'Split evenly between two categories',
-            ),
-            percentages: [50, 50],
-          ),
-          _FormulaTemplate(
-            name: '90/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Hampir semua saldo untuk prioritas utama',
-              en: 'Almost all balance goes to the main priority',
-            ),
-            percentages: [90, 10],
-          ),
+          formula('80/20', 'formula_main_then_other', [80, 20]),
+          formula('70/30', 'formula_main_and_support', [70, 30]),
+          formula('60/40', 'formula_two_important', [60, 40]),
+          formula('50/50', 'formula_even_two', [50, 50]),
+          formula('90/10', 'formula_almost_all_main', [90, 10]),
         ];
       case 3:
         return [
-          _FormulaTemplate(
-            name: '50/30/20',
-            description: _formulaCopy(
-              isEn,
-              id: 'Kebutuhan utama, fleksibel, dan tabungan',
-              en: 'Main needs, flexible spending, and savings',
-            ),
-            percentages: [50, 30, 20],
-          ),
-          _FormulaTemplate(
-            name: '50/25/25',
-            description: _formulaCopy(
-              isEn,
-              id: 'Kebutuhan utama dengan dua kategori pendukung seimbang',
-              en: 'Main needs with two balanced supporting categories',
-            ),
-            percentages: [50, 25, 25],
-          ),
-          _FormulaTemplate(
-            name: '60/30/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Cocok saat biaya wajib sedang besar',
-              en: 'Useful when required costs are high',
-            ),
-            percentages: [60, 30, 10],
-          ),
-          _FormulaTemplate(
-            name: '60/20/20',
-            description: _formulaCopy(
-              isEn,
-              id: 'Biaya wajib besar, dua kategori lain tetap terjaga',
-              en: 'High required costs while keeping two other categories funded',
-            ),
-            percentages: [60, 20, 20],
-          ),
-          _FormulaTemplate(
-            name: '70/20/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Mode hemat saat biaya pokok tinggi',
-              en: 'Lean mode when essential costs are high',
-            ),
-            percentages: [70, 20, 10],
-          ),
-          _FormulaTemplate(
-            name: '80/10/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Mayoritas saldo untuk kebutuhan wajib',
-              en: 'Most balance goes to required needs',
-            ),
-            percentages: [80, 10, 10],
-          ),
-          _FormulaTemplate(
-            name: '40/30/30',
-            description: _formulaCopy(
-              isEn,
-              id: 'Lebih longgar untuk dua kategori selain kebutuhan utama',
-              en: 'More flexible for two categories outside main needs',
-            ),
-            percentages: [40, 30, 30],
-          ),
+          formula('50/30/20', 'formula_main_flexible_savings', [50, 30, 20]),
+          formula('50/25/25', 'formula_main_two_balanced', [50, 25, 25]),
+          formula('60/30/10', 'formula_required_costs_high', [60, 30, 10]),
+          formula('60/20/20', 'formula_required_high_two_funded', [60, 20, 20]),
+          formula('70/20/10', 'formula_lean_essential_high', [70, 20, 10]),
+          formula('80/10/10', 'formula_most_required', [80, 10, 10]),
+          formula('40/30/30', 'formula_flexible_two_others', [40, 30, 30]),
         ];
       case 4:
         return [
-          _FormulaTemplate(
-            name: '50/30/10/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Kebutuhan, fleksibel, hiburan, dan lain-lain',
-              en: 'Needs, flexible spending, entertainment, and others',
-            ),
-            percentages: [50, 30, 10, 10],
+          formula(
+            '50/30/10/10',
+            'formula_needs_flexible_entertainment_others',
+            [50, 30, 10, 10],
           ),
-          _FormulaTemplate(
-            name: '50/20/20/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Adaptasi 50/30/20 dengan dua kategori pendukung',
-              en: '50/30/20 adaptation with two supporting categories',
-            ),
-            percentages: [50, 20, 20, 10],
-          ),
-          _FormulaTemplate(
-            name: '40/30/20/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Lebih seimbang untuk empat kategori',
-              en: 'More balanced for four categories',
-            ),
-            percentages: [40, 30, 20, 10],
-          ),
-          _FormulaTemplate(
-            name: '40/30/15/15',
-            description: _formulaCopy(
-              isEn,
-              id: 'Kategori fleksibel besar, dua kategori kecil seimbang',
-              en: 'Large flexible category with two smaller balanced categories',
-            ),
-            percentages: [40, 30, 15, 15],
-          ),
-          _FormulaTemplate(
-            name: '60/20/10/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Biaya wajib tinggi, kategori lain dikontrol',
-              en: 'High required costs while controlling other categories',
-            ),
-            percentages: [60, 20, 10, 10],
-          ),
-          _FormulaTemplate(
-            name: '60/30/5/5',
-            description: _formulaCopy(
-              isEn,
-              id: 'Adaptasi 60/30/10 dengan dua kategori kecil',
-              en: '60/30/10 adaptation with two smaller categories',
-            ),
-            percentages: [60, 30, 5, 5],
-          ),
-          _FormulaTemplate(
-            name: '65/15/10/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Kebutuhan pokok tinggi untuk biaya hidup mahal',
-              en: 'High essential needs for expensive living costs',
-            ),
-            percentages: [65, 15, 10, 10],
-          ),
-          _FormulaTemplate(
-            name: '70/10/10/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Prioritas biaya wajib',
-              en: 'Prioritize required costs',
-            ),
-            percentages: [70, 10, 10, 10],
-          ),
-          _FormulaTemplate(
-            name: '80/10/5/5',
-            description: _formulaCopy(
-              isEn,
-              id: 'Mode sangat ketat untuk prioritas utama',
-              en: 'Very strict mode for the main priority',
-            ),
-            percentages: [80, 10, 5, 5],
-          ),
-          _FormulaTemplate(
-            name: '25/25/25/25',
-            description: _formulaCopy(
-              isEn,
-              id: 'Pembagian rata untuk empat kategori',
-              en: 'Even split across four categories',
-            ),
-            percentages: [25, 25, 25, 25],
-          ),
+          formula('50/20/20/10', 'formula_503020_four', [50, 20, 20, 10]),
+          formula('40/30/20/10', 'formula_balanced_four', [40, 30, 20, 10]),
+          formula('40/30/15/15', 'formula_large_flexible_two_small', [
+            40,
+            30,
+            15,
+            15,
+          ]),
+          formula('60/20/10/10', 'formula_high_required_controlled', [
+            60,
+            20,
+            10,
+            10,
+          ]),
+          formula('60/30/5/5', 'formula_603010_four', [60, 30, 5, 5]),
+          formula('65/15/10/10', 'formula_high_daily_expensive', [
+            65,
+            15,
+            10,
+            10,
+          ]),
+          formula('70/10/10/10', 'formula_prioritize_required', [
+            70,
+            10,
+            10,
+            10,
+          ]),
+          formula('80/10/5/5', 'formula_very_strict_main', [80, 10, 5, 5]),
+          formula('25/25/25/25', 'formula_even_four', [25, 25, 25, 25]),
         ];
       case 5:
         return [
-          _FormulaTemplate(
-            name: '50/20/10/10/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Adaptasi 50/30/20 untuk lima kategori',
-              en: '50/30/20 adaptation for five categories',
-            ),
-            percentages: [50, 20, 10, 10, 10],
-          ),
-          _FormulaTemplate(
-            name: '40/20/20/10/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Prioritas utama lebih ringan',
-              en: 'Lighter main priority',
-            ),
-            percentages: [40, 20, 20, 10, 10],
-          ),
-          _FormulaTemplate(
-            name: '60/15/10/10/5',
-            description: _formulaCopy(
-              isEn,
-              id: 'Biaya wajib dominan dengan cadangan kecil',
-              en: 'Dominant required costs with small reserves',
-            ),
-            percentages: [60, 15, 10, 10, 5],
-          ),
-          _FormulaTemplate(
-            name: '70/10/10/5/5',
-            description: _formulaCopy(
-              isEn,
-              id: 'Mode hemat untuk lima kategori',
-              en: 'Lean mode for five categories',
-            ),
-            percentages: [70, 10, 10, 5, 5],
-          ),
-          _FormulaTemplate(
-            name: '30/25/20/15/10',
-            description: _formulaCopy(
-              isEn,
-              id: 'Tangga prioritas bertahap',
-              en: 'Gradual priority ladder',
-            ),
-            percentages: [30, 25, 20, 15, 10],
-          ),
+          formula('50/20/10/10/10', 'formula_503020_five', [
+            50,
+            20,
+            10,
+            10,
+            10,
+          ]),
+          formula('40/20/20/10/10', 'formula_lighter_main', [
+            40,
+            20,
+            20,
+            10,
+            10,
+          ]),
+          formula('60/15/10/10/5', 'formula_dominant_required_small_reserve', [
+            60,
+            15,
+            10,
+            10,
+            5,
+          ]),
+          formula('70/10/10/5/5', 'formula_lean_five', [70, 10, 10, 5, 5]),
+          formula('30/25/20/15/10', 'formula_gradual_priority', [
+            30,
+            25,
+            20,
+            15,
+            10,
+          ]),
         ];
       default:
         return [
-          _FormulaTemplate(
-            name: isEn ? 'Priority' : 'Prioritas',
-            description: _formulaCopy(
-              isEn,
-              id: 'Kategori pertama lebih besar, sisanya dibagi rata',
-              en: 'The first category gets more, the rest is split evenly',
-            ),
-            percentages: _priorityPercentages(categoryCount),
+          formula(
+            context.tr('formula_priority'),
+            'formula_first_larger_rest_even',
+            _priorityPercentages(categoryCount),
           ),
           _FormulaTemplate(
-            name: isEn ? 'Balanced' : 'Seimbang',
-            description: _formulaCopy(
-              isEn,
-              id: 'Dibagi rata untuk $categoryCount kategori',
-              en: 'Split evenly across $categoryCount categories',
-            ),
+            name: context.tr('formula_balanced'),
+            description: context.trf('formula_even_categories', {
+              'count': categoryCount,
+            }),
             percentages: _equalPercentages(categoryCount),
           ),
         ];
     }
-  }
-
-  String _formulaCopy(bool isEn, {required String id, required String en}) {
-    return isEn ? en : id;
   }
 
   List<int> _priorityPercentages(int count) {
@@ -944,22 +736,6 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
     return DateTime(nextAvailable.year, nextAvailable.month);
   }
 
-  List<DateTime?> _visibleDates(DateTime visibleMonth) {
-    final firstDay = DateTime(visibleMonth.year, visibleMonth.month);
-    final daysInMonth = DateTime(
-      visibleMonth.year,
-      visibleMonth.month + 1,
-      0,
-    ).day;
-    final leadingEmptyCells = firstDay.weekday - 1;
-
-    return [
-      for (var i = 0; i < leadingEmptyCells; i++) null,
-      for (var day = 1; day <= daysInMonth; day++)
-        DateTime(visibleMonth.year, visibleMonth.month, day),
-    ];
-  }
-
   void _handleDateTap(List<BudgetPeriod> periods, DateTime date) {
     if (_isDateOccupied(periods, date)) return;
 
@@ -1009,30 +785,8 @@ class _AddPeriodScreenState extends ConsumerState<AddPeriodScreen> {
     });
   }
 
-  bool _isSelected(DateTime date) {
-    final normalizedDate = _dateOnly(date);
-    return _isSameDate(normalizedDate, _startDate) ||
-        _isSameDate(normalizedDate, _endDate);
-  }
-
-  bool _isInSelectedRange(DateTime date) {
-    if (_startDate == null || _endDate == null) return false;
-
-    final normalizedDate = _dateOnly(date);
-    return normalizedDate.isAfter(_startDate!) &&
-        normalizedDate.isBefore(_endDate!);
-  }
-
   DateTime _dateOnly(DateTime value) {
     return DateTime(value.year, value.month, value.day);
-  }
-
-  bool _isSameDate(DateTime date, DateTime? other) {
-    if (other == null) return false;
-
-    return date.year == other.year &&
-        date.month == other.month &&
-        date.day == other.day;
   }
 
   void _refreshPreview() {
@@ -1366,7 +1120,7 @@ class _CustomFormulaCard extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     context.tr(
-                      'Isi pembagian sendiri pakai persentase atau nominal',
+                      'enter_percentages_or_amounts_for_each_category',
                     ),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: AppColors.textSecondary,
@@ -1733,155 +1487,6 @@ class _SelectedRangeCard extends StatelessWidget {
             ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _CalendarHeader extends StatelessWidget {
-  final String label;
-  final VoidCallback onPrevious;
-  final VoidCallback onNext;
-
-  const _CalendarHeader({
-    required this.label,
-    required this.onPrevious,
-    required this.onNext,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          IconButton(
-            onPressed: onPrevious,
-            icon: const Icon(Icons.chevron_left),
-            color: AppColors.textPrimary,
-          ),
-          Expanded(
-            child: Text(
-              label,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                color: AppColors.textPrimary,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-          ),
-          IconButton(
-            onPressed: onNext,
-            icon: const Icon(Icons.chevron_right),
-            color: AppColors.textPrimary,
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _CalendarGrid extends StatelessWidget {
-  final List<DateTime?> dates;
-  final bool Function(DateTime date) isDisabled;
-  final bool Function(DateTime date) isSelected;
-  final bool Function(DateTime date) isInRange;
-  final ValueChanged<DateTime> onTap;
-
-  const _CalendarGrid({
-    required this.dates,
-    required this.isDisabled,
-    required this.isSelected,
-    required this.isInRange,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GridView.builder(
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      itemCount: dates.length,
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 7,
-        mainAxisSpacing: 8,
-        crossAxisSpacing: 6,
-      ),
-      itemBuilder: (context, index) {
-        final date = dates[index];
-        if (date == null) return const SizedBox.shrink();
-
-        return _CalendarDayCell(
-          day: date.day,
-          disabled: isDisabled(date),
-          selected: isSelected(date),
-          inRange: isInRange(date),
-          onTap: () => onTap(date),
-        );
-      },
-    );
-  }
-}
-
-class _CalendarDayCell extends StatelessWidget {
-  final int day;
-  final bool disabled;
-  final bool selected;
-  final bool inRange;
-  final VoidCallback onTap;
-
-  const _CalendarDayCell({
-    required this.day,
-    required this.disabled,
-    required this.selected,
-    required this.inRange,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    final color = disabled
-        ? AppColors.border.withValues(alpha: 0.45)
-        : selected
-        ? AppColors.primary
-        : inRange
-        ? AppColors.secondary.withValues(alpha: 0.24)
-        : Colors.white;
-    final textColor = disabled
-        ? AppColors.textSecondary.withValues(alpha: 0.42)
-        : selected
-        ? Colors.white
-        : AppColors.textPrimary;
-
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
-      onTap: disabled ? null : onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: color,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: selected
-                ? AppColors.primary
-                : inRange
-                ? AppColors.secondary
-                : AppColors.border,
-          ),
-        ),
-        child: Text(
-          '$day',
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            color: textColor,
-            fontWeight: FontWeight.w900,
-          ),
-        ),
       ),
     );
   }

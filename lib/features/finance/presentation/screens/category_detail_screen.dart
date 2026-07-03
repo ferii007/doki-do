@@ -16,6 +16,7 @@ import '../providers/transaction_action_provider.dart';
 import '../widgets/category_detail/category_balance_header.dart';
 import '../widgets/category_detail/transaction_timeline.dart';
 import '../widgets/transaction_form/transaction_edit_sheet.dart';
+import '../widgets/transaction_type_icon.dart';
 
 class CategoryDetailScreen extends ConsumerWidget {
   const CategoryDetailScreen({super.key});
@@ -176,20 +177,7 @@ class _AdjustmentTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                isIncrease
-                    ? Icons.add_card_outlined
-                    : Icons.remove_circle_outline,
-                color: color,
-              ),
-            ),
+            TransactionTypeIcon(isIncome: isIncrease),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

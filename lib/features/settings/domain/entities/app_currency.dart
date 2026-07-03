@@ -3,28 +3,28 @@ import 'package:intl/intl.dart';
 enum AppCurrency {
   idr(
     code: 'IDR',
-    label: 'Rupiah',
+    labelKey: 'currency_idr',
     symbol: 'Rp ',
     locale: 'id_ID',
     decimalDigits: 0,
   ),
   usd(
     code: 'USD',
-    label: 'US Dollar',
+    labelKey: 'currency_usd',
     symbol: r'$',
     locale: 'en_US',
     decimalDigits: 2,
   );
 
   final String code;
-  final String label;
+  final String labelKey;
   final String symbol;
   final String locale;
   final int decimalDigits;
 
   const AppCurrency({
     required this.code,
-    required this.label,
+    required this.labelKey,
     required this.symbol,
     required this.locale,
     required this.decimalDigits,

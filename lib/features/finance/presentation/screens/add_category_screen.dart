@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/formatters/currency_input_formatter.dart';
 import '../../../../core/formatters/rupiah_formatter.dart';
+import '../../../../core/layout/app_spacing.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -84,14 +85,14 @@ class _AddCategoryScreenState extends ConsumerState<AddCategoryScreen> {
                     selectedPeriodId: selectedPeriodId,
                     onChanged: (value) => setState(() => _periodId = value),
                   ),
-                  const SizedBox(height: 12),
+                  const AppFormControlGap(),
                   _RemainingAllocationCard(amount: remainingAllocation),
-                  const SizedBox(height: 12),
+                  const AppFormControlGap(),
                   TransactionNoteField(
                     controller: _nameController,
                     label: context.tr('budget_category_name'),
                   ),
-                  const SizedBox(height: 12),
+                  const AppFormFieldGap(),
                   AmountInput(controller: _amountController),
                   const SizedBox(height: 24),
                   FilledButton(

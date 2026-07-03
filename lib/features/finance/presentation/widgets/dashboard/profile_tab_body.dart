@@ -8,6 +8,7 @@ import '../../../../../core/widgets/loading_view.dart';
 import '../../../../settings/presentation/providers/app_settings_provider.dart';
 import '../../../domain/entities/budget_snapshot.dart';
 import '../../providers/current_budget_provider.dart';
+import '../transaction_type_icon.dart';
 
 class ProfileTabBody extends ConsumerWidget {
   final BudgetSnapshot? currentSnapshot;
@@ -169,13 +170,13 @@ class _ProfileSummaryGrid extends StatelessWidget {
           tint: AppColors.secondary,
         ),
         _ProfileAmountMetricCard(
-          icon: Icons.trending_up_rounded,
+          leading: const TransactionTypeIcon(isIncome: true, size: 34),
           label: context.tr('income'),
           amount: totalIncome,
           tint: AppColors.success,
         ),
         _ProfileAmountMetricCard(
-          icon: Icons.trending_down_rounded,
+          leading: const TransactionTypeIcon(isIncome: false, size: 34),
           label: context.tr('expense'),
           amount: totalExpense,
           tint: AppColors.danger,
@@ -246,13 +247,13 @@ class _ProfileMetricCard extends StatelessWidget {
 }
 
 class _ProfileAmountMetricCard extends StatelessWidget {
-  final IconData icon;
+  final Widget leading;
   final String label;
   final int amount;
   final Color tint;
 
   const _ProfileAmountMetricCard({
-    required this.icon,
+    required this.leading,
     required this.label,
     required this.amount,
     required this.tint,
@@ -278,7 +279,7 @@ class _ProfileAmountMetricCard extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _MetricIcon(icon: icon, tint: tint),
+          leading,
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [

@@ -4,6 +4,9 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/formatters/date_formatter.dart';
 import '../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../core/localization/app_localizations.dart';
+import 'transaction_type_icon.dart';
+
+export 'transaction_type_icon.dart';
 
 class TransactionHistoryCard extends StatelessWidget {
   final String title;
@@ -34,7 +37,7 @@ class TransactionHistoryCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _TransactionTypeIcon(isIncome: isIncome),
+            TransactionTypeIcon(isIncome: isIncome),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -91,52 +94,6 @@ class TransactionHistoryCard extends StatelessWidget {
           ],
         ),
       ),
-    );
-  }
-}
-
-class _TransactionTypeIcon extends StatelessWidget {
-  final bool isIncome;
-
-  const _TransactionTypeIcon({required this.isIncome});
-
-  @override
-  Widget build(BuildContext context) {
-    final color = isIncome ? AppColors.primary : AppColors.danger;
-
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: isIncome
-          ? Icon(Icons.add_card_outlined, color: color)
-          : Stack(
-              alignment: Alignment.center,
-              children: [
-                Icon(Icons.credit_card_outlined, color: color, size: 22),
-                Positioned(
-                  right: 7,
-                  bottom: 7,
-                  child: Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 1.4),
-                    ),
-                    child: const Icon(
-                      Icons.remove,
-                      color: Colors.white,
-                      size: 9,
-                    ),
-                  ),
-                ),
-              ],
-            ),
     );
   }
 }

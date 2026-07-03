@@ -4,6 +4,9 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 
+import '../../../../core/formatters/date_formatter.dart';
+import '../../../../core/localization/app_localizations.dart';
+import '../../../settings/domain/entities/app_language.dart';
 import '../../domain/entities/budget_allocation_draft.dart';
 import '../local/empty_finance_data.dart';
 
@@ -177,7 +180,9 @@ class FinanceLocalDatasource {
         (carryOverPeriod['transactions'] as List).add({
           'transaction_id': _uuid.v4(),
           'category_id': null,
-          'title': 'Transfer ke periode ${_periodLabel(period)}',
+          'title': _localizedText('transfer_to_period', {
+            'period': _periodLabel(period),
+          }),
           'amount': carryOverAmount,
           'date': normalizedStart.toIso8601String(),
           'type': 'expense',
@@ -185,7 +190,9 @@ class FinanceLocalDatasource {
         (period['transactions'] as List).add({
           'transaction_id': _uuid.v4(),
           'category_id': null,
-          'title': 'Transfer dari periode ${_periodLabel(carryOverPeriod)}',
+          'title': _localizedText('transfer_from_period', {
+            'period': _periodLabel(carryOverPeriod),
+          }),
           'amount': carryOverAmount,
           'date': normalizedStart.toIso8601String(),
           'type': 'income',
@@ -197,7 +204,9 @@ class FinanceLocalDatasource {
         (carryOverPeriod['transactions'] as List).add({
           'transaction_id': _uuid.v4(),
           'category_id': null,
-          'title': 'Ditombok dari periode ${_periodLabel(period)}',
+          'title': _localizedText('covered_by_period', {
+            'period': _periodLabel(period),
+          }),
           'amount': deficitAmount,
           'date': normalizedStart.toIso8601String(),
           'type': 'income',
@@ -205,7 +214,9 @@ class FinanceLocalDatasource {
         (period['transactions'] as List).add({
           'transaction_id': _uuid.v4(),
           'category_id': null,
-          'title': 'Menombok periode ${_periodLabel(carryOverPeriod)}',
+          'title': _localizedText('covering_period', {
+            'period': _periodLabel(carryOverPeriod),
+          }),
           'amount': deficitAmount,
           'date': normalizedStart.toIso8601String(),
           'type': 'expense',
@@ -395,7 +406,7 @@ class FinanceLocalDatasource {
       _ => previousAmount,
     };
     if (newAmount < 0) {
-      throw StateError('Nominal anggaran tidak boleh kurang dari nol.');
+      throw StateError('error_budget_negative');
     }
 
     final deltaAmount = newAmount - previousAmount;
@@ -405,7 +416,10 @@ class FinanceLocalDatasource {
       final remainingAllocation = _remainingAllocation(data);
       if (deltaAmount > remainingAllocation) {
         throw StateError(
-          'Nominal melebihi sisa yang belum dibagi, yaitu ${_formatPlainAmount(remainingAllocation)}.',
+          _localizedText(
+            'the_amount_exceeds_the_remaining_allocatable_balance_which_is_amount',
+            {'amount': _formatPlainAmount(remainingAllocation)},
+          ),
         );
       }
     }
@@ -415,7 +429,7 @@ class FinanceLocalDatasource {
       final relatedPreviousAmount = _asInt(relatedCategory['allocated_amount']);
       final relatedNewAmount = relatedPreviousAmount - deltaAmount;
       if (relatedNewAmount < 0) {
-        throw StateError('Nominal anggaran sumber tidak mencukupi.');
+        throw StateError('error_source_budget_insufficient');
       }
       _appendCategoryAdjustment(
         data,
@@ -478,7 +492,7 @@ class FinanceLocalDatasource {
           item['related_category_id'] == categoryId;
     });
     if (hasTransactions || hasAdjustments) {
-      throw StateError('Anggaran sudah memiliki riwayat.');
+      throw StateError('error_budget_has_history');
     }
 
     (data['categories'] as List).removeWhere((category) {
@@ -516,7 +530,7 @@ class FinanceLocalDatasource {
     final normalizedStart = _dateOnly(startDate);
     final normalizedEnd = _dateOnly(endDate);
     if (!normalizedEnd.isAfter(normalizedStart)) {
-      throw StateError('Tanggal selesai periode harus setelah tanggal mulai.');
+      throw StateError('error_period_end_before_start');
     }
     if (_rangeOverlapsExistingPeriod(
       periods,
@@ -524,7 +538,7 @@ class FinanceLocalDatasource {
       normalizedStart,
       normalizedEnd,
     )) {
-      throw StateError('Tanggal yang dipilih bertabrakan dengan periode lain.');
+      throw StateError('error_period_overlap');
     }
 
     period['start_date'] = normalizedStart.toIso8601String();
@@ -606,6 +620,9 @@ class FinanceLocalDatasource {
           );
       for (final category
           in (period['categories'] as List).cast<Map<String, dynamic>>()) {
+        category['category_name'] = _migrateDefaultCategoryName(
+          category['category_name'],
+        );
         category['base_allocated_amount'] =
             category['base_allocated_amount'] as int? ??
             _asInt(category['allocated_amount']);
@@ -647,7 +664,9 @@ class FinanceLocalDatasource {
                 'title': item['title'],
                 'amount': _asInt(item['amount']),
                 'type': item['type'] == 'income' ? 'income' : 'expense',
-                'preferred_category_name': item['preferred_category_name'],
+                'preferred_category_name': _migrateDefaultCategoryName(
+                  item['preferred_category_name'],
+                ),
                 'day_of_month': item['day_of_month'],
                 'created_at': item['created_at'],
               };
@@ -667,6 +686,26 @@ class FinanceLocalDatasource {
         : (periods.isEmpty ? null : periods.first['period_id']);
 
     return normalized;
+  }
+
+  dynamic _migrateDefaultCategoryName(dynamic value) {
+    if (value is String &&
+        AppLanguage.values.any(
+          (language) =>
+              value.trim().toLowerCase() ==
+              AppLocalizations(
+                language,
+              ).tr('legacy_default_basic_needs').toLowerCase(),
+        )) {
+      return AppLocalizations(
+        DateFormatterPreference.current,
+      ).tr('default_daily_needs');
+    }
+    return value;
+  }
+
+  String _localizedText(String key, Map<String, Object> values) {
+    return AppLocalizations(DateFormatterPreference.current).trf(key, values);
   }
 
   Map<String, dynamic> _findPeriod(

@@ -4,7 +4,9 @@ import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../../core/localization/app_localizations.dart';
 import '../../../../../core/widgets/amount_text.dart';
+import '../../../../../core/widgets/app_inline_divider.dart';
 import '../../../domain/entities/category_budget.dart';
+import '../transaction_type_icon.dart';
 
 class BudgetCategoryCard extends StatelessWidget {
   final CategoryBudget category;
@@ -107,12 +109,7 @@ class BudgetCategoryCard extends StatelessWidget {
                       ),
                     ),
                   ),
-                  Container(
-                    width: 1,
-                    height: 38,
-                    margin: const EdgeInsets.symmetric(horizontal: 12),
-                    color: AppColors.border,
-                  ),
+                  const AppInlineDivider(height: 38, horizontalMargin: 12),
                   Expanded(
                     child: _BudgetValueBlock(
                       label: context.tr('remaining_money'),
@@ -160,20 +157,22 @@ class _BudgetCategoryTitle extends StatelessWidget {
       );
     }
 
-    return Text.rich(
-      TextSpan(
-        children: [
-          TextSpan(
-            text: '${_formatPercent(percent)}%',
-            style: titleStyle?.copyWith(color: AppColors.primary),
+    return Row(
+      children: [
+        Text(
+          '${_formatPercent(percent)}%',
+          style: titleStyle?.copyWith(color: AppColors.primary),
+        ),
+        const AppInlineDivider(),
+        Expanded(
+          child: Text(
+            name,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: titleStyle,
           ),
-          const TextSpan(text: ' | '),
-          TextSpan(text: name),
-        ],
-      ),
-      maxLines: 1,
-      overflow: TextOverflow.ellipsis,
-      style: titleStyle,
+        ),
+      ],
     );
   }
 
@@ -309,14 +308,14 @@ class _BudgetActionMenuCard extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           _BudgetActionMenuItem(
-            icon: Icons.add_card_outlined,
+            leading: const TransactionTypeIcon(isIncome: true, size: 30),
             label: context.tr('add_budget_amount'),
             color: AppColors.primary,
             onTap: onIncrease,
           ),
           const SizedBox(height: 4),
           _BudgetActionMenuItem(
-            icon: Icons.remove_circle_outline,
+            leading: const TransactionTypeIcon(isIncome: false, size: 30),
             label: context.tr('reduce_budget_amount'),
             color: AppColors.danger,
             onTap: onDecrease,
@@ -343,19 +342,21 @@ class _BudgetActionMenuCard extends StatelessWidget {
 }
 
 class _BudgetActionMenuItem extends StatelessWidget {
-  final IconData icon;
+  final IconData? icon;
+  final Widget? leading;
   final String label;
   final Color color;
   final double opacity;
   final VoidCallback onTap;
 
   const _BudgetActionMenuItem({
-    required this.icon,
+    this.icon,
+    this.leading,
     required this.label,
     required this.color,
     this.opacity = 1,
     required this.onTap,
-  });
+  }) : assert(icon != null || leading != null);
 
   @override
   Widget build(BuildContext context) {
@@ -368,15 +369,16 @@ class _BudgetActionMenuItem extends StatelessWidget {
           opacity: opacity,
           child: Row(
             children: [
-              Container(
-                width: 30,
-                height: 30,
-                decoration: BoxDecoration(
-                  color: color.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(icon, size: 18, color: color),
-              ),
+              leading ??
+                  Container(
+                    width: 30,
+                    height: 30,
+                    decoration: BoxDecoration(
+                      color: color.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Icon(icon, size: 18, color: color),
+                  ),
               const SizedBox(width: 10),
               Expanded(
                 child: Text(

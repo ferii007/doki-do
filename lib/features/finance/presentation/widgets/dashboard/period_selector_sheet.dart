@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/formatters/date_formatter.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../domain/entities/budget_period.dart';
 
 class PeriodSelectorSheet extends StatelessWidget {
@@ -27,67 +28,48 @@ class PeriodSelectorSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SafeArea(
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Center(
-              child: Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.34),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
-            ),
-            const SizedBox(height: 16),
-            Text(
-              context.tr('choose_financial_period'),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w800,
-              ),
-            ),
-            const SizedBox(height: 10),
-            Flexible(
-              child: ListView.separated(
-                shrinkWrap: true,
-                itemCount: periods.length,
-                separatorBuilder: (_, _) => Divider(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  height: 1,
-                ),
-                itemBuilder: (context, index) {
-                  final period = periods[index];
-                  final selected = period.id == selectedPeriodId;
+    return AppSheetSurface(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          AppSheetHeader(
+            title: context.tr('choose_financial_period'),
+            icon: Icons.calendar_month_outlined,
+          ),
+          const SizedBox(height: 14),
+          Flexible(
+            child: ListView.separated(
+              shrinkWrap: true,
+              itemCount: periods.length,
+              separatorBuilder: (_, _) =>
+                  Divider(color: AppColors.border, height: 1),
+              itemBuilder: (context, index) {
+                final period = periods[index];
+                final selected = period.id == selectedPeriodId;
 
-                  return _PeriodOptionTile(
-                    period: period,
-                    selected: selected,
-                    onSelect: () => onSelect(period.id),
-                    onEdit: () => onEditPeriod(period),
-                    onDelete: () => onDeletePeriod(period),
-                  );
-                },
+                return _PeriodOptionTile(
+                  period: period,
+                  selected: selected,
+                  onSelect: () => onSelect(period.id),
+                  onEdit: () => onEditPeriod(period),
+                  onDelete: () => onDeletePeriod(period),
+                );
+              },
+            ),
+          ),
+          const SizedBox(height: 14),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton.icon(
+              onPressed: isAdding ? null : onAddPeriod,
+              icon: const Icon(Icons.add),
+              label: Text(
+                context.tr(isAdding ? 'adding' : 'add_financial_period'),
               ),
             ),
-            const SizedBox(height: 12),
-            SizedBox(
-              width: double.infinity,
-              child: FilledButton.icon(
-                onPressed: isAdding ? null : onAddPeriod,
-                icon: const Icon(Icons.add),
-                label: Text(
-                  context.tr(isAdding ? 'adding' : 'add_financial_period'),
-                ),
-              ),
-            ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -110,26 +92,30 @@ class _PeriodOptionTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(10),
+    return GestureDetector(
       onTap: onSelect,
-      child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 6),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 9),
+        decoration: BoxDecoration(
+          color: selected
+              ? AppColors.primary.withValues(alpha: 0.08)
+              : Colors.transparent,
+          borderRadius: BorderRadius.circular(12),
+        ),
         child: Row(
           children: [
             if (selected)
-              Icon(Icons.check_circle, color: AppColors.secondary)
+              Icon(Icons.check_circle, color: AppColors.primary)
             else
-              Icon(
-                Icons.radio_button_unchecked,
-                color: Colors.white.withValues(alpha: 0.32),
-              ),
+              Icon(Icons.radio_button_unchecked, color: AppColors.border),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
                 DateFormatter.periodFull(period.startDate, period.endDate),
                 style: TextStyle(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
                 ),
               ),
@@ -217,7 +203,8 @@ class _PeriodActionMenuState extends State<_PeriodActionMenu> {
             controller.isOpen ? controller.close() : controller.open();
           },
           icon: const Icon(Icons.more_horiz_rounded),
-          color: Colors.white,
+          color: AppColors.primary,
+          style: IconButton.styleFrom(backgroundColor: AppColors.mintSurface),
         );
       },
     );

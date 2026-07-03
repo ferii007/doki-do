@@ -5,8 +5,10 @@ import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/formatters/date_formatter.dart';
 import '../../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../domain/entities/budget_snapshot.dart';
 import '../../../domain/entities/transaction_type.dart';
+import '../transaction_type_icon.dart';
 
 enum _ChartMode { line, bar }
 
@@ -94,53 +96,36 @@ class _PeriodStatisticsChartState extends State<PeriodStatisticsChart> {
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.34),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  context.tr('choose_chart_type'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _ChartModeOption(
-                  selected: _mode == _ChartMode.line,
-                  icon: Icons.show_chart,
-                  label: context.tr('line_chart'),
-                  onTap: () {
-                    setState(() => _mode = _ChartMode.line);
-                    Navigator.pop(context);
-                  },
-                ),
-                const SizedBox(height: 10),
-                _ChartModeOption(
-                  selected: _mode == _ChartMode.bar,
-                  icon: Icons.bar_chart_rounded,
-                  label: context.tr('column_chart'),
-                  onTap: () {
-                    setState(() => _mode = _ChartMode.bar);
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
+        return AppSheetSurface(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSheetHeader(
+                title: context.tr('choose_chart_type'),
+                icon: Icons.query_stats_rounded,
+              ),
+              const SizedBox(height: 14),
+              _ChartModeOption(
+                selected: _mode == _ChartMode.line,
+                icon: Icons.show_chart,
+                label: context.tr('line_chart'),
+                onTap: () {
+                  setState(() => _mode = _ChartMode.line);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 8),
+              _ChartModeOption(
+                selected: _mode == _ChartMode.bar,
+                icon: Icons.bar_chart_rounded,
+                label: context.tr('column_chart'),
+                onTap: () {
+                  setState(() => _mode = _ChartMode.bar);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
         );
       },
@@ -269,53 +254,36 @@ class _ExpenseStatisticsChartState extends State<ExpenseStatisticsChart> {
     showModalBottomSheet<void>(
       context: context,
       builder: (context) {
-        return SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.fromLTRB(16, 12, 16, 16),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.34),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  context.tr('choose_chart_type'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _ChartModeOption(
-                  selected: _mode == _ChartMode.line,
-                  icon: Icons.show_chart,
-                  label: context.tr('line_chart'),
-                  onTap: () {
-                    setState(() => _mode = _ChartMode.line);
-                    Navigator.pop(context);
-                  },
-                ),
-                const SizedBox(height: 10),
-                _ChartModeOption(
-                  selected: _mode == _ChartMode.bar,
-                  icon: Icons.bar_chart_rounded,
-                  label: context.tr('column_chart'),
-                  onTap: () {
-                    setState(() => _mode = _ChartMode.bar);
-                    Navigator.pop(context);
-                  },
-                ),
-              ],
-            ),
+        return AppSheetSurface(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSheetHeader(
+                title: context.tr('choose_chart_type'),
+                icon: Icons.query_stats_rounded,
+              ),
+              const SizedBox(height: 14),
+              _ChartModeOption(
+                selected: _mode == _ChartMode.line,
+                icon: Icons.show_chart,
+                label: context.tr('line_chart'),
+                onTap: () {
+                  setState(() => _mode = _ChartMode.line);
+                  Navigator.pop(context);
+                },
+              ),
+              const SizedBox(height: 8),
+              _ChartModeOption(
+                selected: _mode == _ChartMode.bar,
+                icon: Icons.bar_chart_rounded,
+                label: context.tr('column_chart'),
+                onTap: () {
+                  setState(() => _mode = _ChartMode.bar);
+                  Navigator.pop(context);
+                },
+              ),
+            ],
           ),
         );
       },
@@ -552,21 +520,19 @@ class _ChartModeOption extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      borderRadius: BorderRadius.circular(8),
+    return GestureDetector(
       onTap: onTap,
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 160),
         width: double.infinity,
-        padding: const EdgeInsets.all(14),
+        padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: selected
-              ? AppColors.primary.withValues(alpha: 0.22)
-              : Colors.white.withValues(alpha: 0.08),
-          borderRadius: BorderRadius.circular(8),
+              ? AppColors.primary.withValues(alpha: 0.08)
+              : AppColors.background,
+          borderRadius: BorderRadius.circular(14),
           border: Border.all(
-            color: selected
-                ? AppColors.secondary
-                : Colors.white.withValues(alpha: 0.12),
+            color: selected ? AppColors.primary : AppColors.border,
           ),
         ),
         child: Row(
@@ -575,8 +541,8 @@ class _ChartModeOption extends StatelessWidget {
               width: 34,
               height: 34,
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(8),
+                color: AppColors.surface,
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(icon, color: AppColors.primary, size: 20),
             ),
@@ -585,12 +551,12 @@ class _ChartModeOption extends StatelessWidget {
               child: Text(
                 label,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Colors.white,
+                  color: AppColors.textPrimary,
                   fontWeight: FontWeight.w800,
                 ),
               ),
             ),
-            if (selected) Icon(Icons.check_circle, color: AppColors.secondary),
+            if (selected) Icon(Icons.check_circle, color: AppColors.primary),
           ],
         ),
       ),
@@ -652,9 +618,7 @@ class _LineFinanceChart extends StatelessWidget {
                 final tooltipIndex = entry.key;
                 final spot = entry.value;
                 final snapshot = snapshots[spot.x.toInt()];
-                final icon = spot.barIndex == 0
-                    ? Icons.trending_up_rounded
-                    : Icons.trending_down_rounded;
+                final isIncome = spot.barIndex == 0;
                 final color = spot.barIndex == 0
                     ? AppColors.secondary
                     : AppColors.danger;
@@ -673,14 +637,9 @@ class _LineFinanceChart extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                         ),
                       ),
-                    TextSpan(
-                      text: String.fromCharCode(icon.codePoint),
-                      style: TextStyle(
-                        color: color,
-                        fontFamily: icon.fontFamily,
-                        package: icon.fontPackage,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    ...transactionTypeTextIconSpans(
+                      isIncome: isIncome,
+                      color: color,
                     ),
                     TextSpan(
                       text: ' ${RupiahFormatter.format(spot.y.toInt())}',
@@ -773,9 +732,7 @@ class _BarFinanceChart extends StatelessWidget {
             fitInsideVertically: true,
             getTooltipItem: (group, groupIndex, rod, rodIndex) {
               final snapshot = snapshots[group.x.toInt()];
-              final icon = rodIndex == 0
-                  ? Icons.trending_up_rounded
-                  : Icons.trending_down_rounded;
+              final isIncome = rodIndex == 0;
               final color = rodIndex == 0
                   ? AppColors.secondary
                   : AppColors.danger;
@@ -793,14 +750,9 @@ class _BarFinanceChart extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  TextSpan(
-                    text: String.fromCharCode(icon.codePoint),
-                    style: TextStyle(
-                      color: color,
-                      fontFamily: icon.fontFamily,
-                      package: icon.fontPackage,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  ...transactionTypeTextIconSpans(
+                    isIncome: isIncome,
+                    color: color,
                   ),
                   TextSpan(
                     text: ' ${RupiahFormatter.format(rod.toY.toInt())}',
@@ -871,7 +823,10 @@ class _SingleFinancePointChart extends StatelessWidget {
               children: [
                 Expanded(
                   child: _SinglePointMetric(
-                    icon: Icons.trending_up_rounded,
+                    leading: const TransactionTypeIcon(
+                      isIncome: true,
+                      size: 34,
+                    ),
                     label: context.tr('income'),
                     amount: snapshot.period.totalIncome,
                     color: AppColors.secondary,
@@ -880,7 +835,10 @@ class _SingleFinancePointChart extends StatelessWidget {
                 const SizedBox(width: 12),
                 Expanded(
                   child: _SinglePointMetric(
-                    icon: Icons.trending_down_rounded,
+                    leading: const TransactionTypeIcon(
+                      isIncome: false,
+                      size: 34,
+                    ),
                     label: context.tr('expense'),
                     amount: snapshot.totalExpense,
                     color: AppColors.danger,
@@ -916,7 +874,7 @@ class _SingleExpensePointChart extends StatelessWidget {
           const SizedBox(height: 14),
           Expanded(
             child: _SinglePointMetric(
-              icon: Icons.trending_down_rounded,
+              leading: const TransactionTypeIcon(isIncome: false, size: 34),
               label: context.tr('expense'),
               amount: point.amount,
               color: AppColors.danger,
@@ -929,13 +887,13 @@ class _SingleExpensePointChart extends StatelessWidget {
 }
 
 class _SinglePointMetric extends StatelessWidget {
-  final IconData icon;
+  final Widget leading;
   final String label;
   final int amount;
   final Color color;
 
   const _SinglePointMetric({
-    required this.icon,
+    required this.leading,
     required this.label,
     required this.amount,
     required this.color,
@@ -963,23 +921,7 @@ class _SinglePointMetric extends StatelessWidget {
                 margin: const EdgeInsets.symmetric(horizontal: 10),
                 color: color.withValues(alpha: 0.18),
               ),
-              Container(
-                width: 34,
-                height: 34,
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  shape: BoxShape.circle,
-                  border: Border.all(color: color, width: 2.4),
-                  boxShadow: [
-                    BoxShadow(
-                      color: color.withValues(alpha: 0.14),
-                      blurRadius: 10,
-                      offset: const Offset(0, 4),
-                    ),
-                  ],
-                ),
-                child: Icon(icon, color: color, size: 18),
-              ),
+              leading,
             ],
           ),
           const SizedBox(height: 12),
@@ -1075,16 +1017,9 @@ class _ExpenseLineChart extends StatelessWidget {
                         fontWeight: FontWeight.w700,
                       ),
                     ),
-                    TextSpan(
-                      text: String.fromCharCode(
-                        Icons.trending_down_rounded.codePoint,
-                      ),
-                      style: TextStyle(
-                        color: AppColors.danger,
-                        fontFamily: Icons.trending_down_rounded.fontFamily,
-                        package: Icons.trending_down_rounded.fontPackage,
-                        fontWeight: FontWeight.w900,
-                      ),
+                    ...transactionTypeTextIconSpans(
+                      isIncome: false,
+                      color: AppColors.danger,
                     ),
                     TextSpan(
                       text: ' ${RupiahFormatter.format(point.amount)}',
@@ -1178,16 +1113,9 @@ class _ExpenseBarChart extends StatelessWidget {
                       fontWeight: FontWeight.w700,
                     ),
                   ),
-                  TextSpan(
-                    text: String.fromCharCode(
-                      Icons.trending_down_rounded.codePoint,
-                    ),
-                    style: TextStyle(
-                      color: AppColors.danger,
-                      fontFamily: Icons.trending_down_rounded.fontFamily,
-                      package: Icons.trending_down_rounded.fontPackage,
-                      fontWeight: FontWeight.w900,
-                    ),
+                  ...transactionTypeTextIconSpans(
+                    isIncome: false,
+                    color: AppColors.danger,
                   ),
                   TextSpan(
                     text: ' ${RupiahFormatter.format(rod.toY.toInt())}',

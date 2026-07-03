@@ -24,6 +24,8 @@ class DokiDoApp extends ConsumerWidget {
     final settingsAsync = ref.watch(appSettingsProvider);
     final settings = settingsAsync.asData?.value;
     final language = settings?.language ?? AppLanguage.id;
+    FinancialPrivacyPreference.hideAmounts =
+        settings?.hideFinancialAmounts ?? false;
     if (settings != null) {
       AppColors.applyPalette(settings.themePalette);
       CurrencyFormatterPreference.current = settings.currency;
@@ -96,6 +98,7 @@ class _AppStartupGateState extends State<_AppStartupGate> {
         AppColors.applyPalette(settings.themePalette);
         CurrencyFormatterPreference.current = settings.currency;
         DateFormatterPreference.current = settings.language;
+        FinancialPrivacyPreference.hideAmounts = settings.hideFinancialAmounts;
         return settings.hasCompletedSetup
             ? const DashboardScreen()
             : SetupScreen(initialSettings: settings);

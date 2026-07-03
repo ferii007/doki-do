@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../../../core/formatters/date_formatter.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/widgets/app_calendar.dart';
 
 class TransactionDatePicker extends StatelessWidget {
   final DateTime date;
@@ -26,7 +27,7 @@ class TransactionDatePicker extends StatelessWidget {
       trailing: const Icon(Icons.calendar_today_outlined),
       onTap: () async {
         final initialDate = _clampDate(date, firstDate, lastDate);
-        final selected = await showDatePicker(
+        final selected = await showAppDatePicker(
           context: context,
           initialDate: initialDate,
           firstDate: firstDate,

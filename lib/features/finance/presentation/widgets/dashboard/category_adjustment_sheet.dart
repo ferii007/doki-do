@@ -3,9 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/formatters/currency_input_formatter.dart';
 import '../../../../../core/formatters/rupiah_formatter.dart';
+import '../../../../../core/layout/app_spacing.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../domain/entities/category_budget.dart';
+import '../transaction_type_icon.dart';
 import '../transaction_form/themed_dropdown_field.dart';
 
 enum CategoryAdjustmentAction { increase, decrease, setAmount }
@@ -69,58 +72,53 @@ class _CategoryAdjustmentSheetState extends State<CategoryAdjustmentSheet> {
         .where((category) => category.id != widget.category.id)
         .toList();
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 18,
-        ),
+    return AppSheetSurface(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 10,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 18,
+      ),
+      child: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Center(
-              child: Container(
-                width: 42,
-                height: 4,
-                decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.34),
-                  borderRadius: BorderRadius.circular(99),
-                ),
-              ),
+            AppSheetHeader(
+              title: _title(context),
+              icon: widget.action == CategoryAdjustmentAction.setAmount
+                  ? Icons.tune_rounded
+                  : null,
+              leading: widget.action == CategoryAdjustmentAction.setAmount
+                  ? null
+                  : TransactionTypeIcon(
+                      isIncome:
+                          widget.action == CategoryAdjustmentAction.increase,
+                    ),
             ),
-            const SizedBox(height: 16),
-            Text(
-              _title(context),
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                color: Colors.white,
-                fontWeight: FontWeight.w900,
-              ),
-            ),
-            const SizedBox(height: 6),
+            const SizedBox(height: 8),
             Text(
               widget.category.name,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: Colors.white.withValues(alpha: 0.72),
-                fontWeight: FontWeight.w700,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 14),
+            const AppFormControlGap(),
             _SheetAmountTextField(
               controller: _amountController,
               label: context.tr('amount_2'),
               onChanged: _refresh,
             ),
-            const SizedBox(height: 12),
+            const AppFormFieldGap(),
             _FocusOnlyLabelTextField(
               controller: _reasonController,
               focusNode: _reasonFocusNode,
               label: context.tr('reason'),
             ),
             if (otherCategories.isNotEmpty) ...[
-              const SizedBox(height: 12),
+              const AppFormFieldGap(),
               _RelatedCategoryPicker(
                 categories: otherCategories,
                 selectedCategoryId: _relatedCategoryId,
@@ -129,7 +127,7 @@ class _CategoryAdjustmentSheetState extends State<CategoryAdjustmentSheet> {
                     setState(() => _relatedCategoryId = value),
               ),
             ],
-            const SizedBox(height: 12),
+            const AppFormControlGap(),
             _ImpactPreview(
               category: widget.category,
               action: widget.action,
@@ -365,7 +363,7 @@ class _SheetAmountTextField extends StatelessWidget {
         prefixIconConstraints: const BoxConstraints(minWidth: 52),
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.background,
         labelStyle: TextStyle(color: AppColors.textSecondary),
         floatingLabelStyle: TextStyle(
           color: AppColors.primary,
@@ -397,7 +395,7 @@ class _FocusOnlyLabelTextField extends StatelessWidget {
         labelText: label,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.background,
         labelStyle: TextStyle(color: AppColors.textSecondary),
         floatingLabelStyle: TextStyle(
           color: AppColors.primary,

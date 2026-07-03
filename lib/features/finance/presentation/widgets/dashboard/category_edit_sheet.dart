@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/localization/app_localizations.dart';
+import '../../../../../core/layout/app_spacing.dart';
+import '../../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../../core/widgets/app_toast.dart';
 import '../../../domain/entities/category_budget.dart';
 
@@ -44,56 +46,40 @@ class _CategoryEditSheetState extends State<CategoryEditSheet> {
   Widget build(BuildContext context) {
     final screenHeight = MediaQuery.sizeOf(context).height;
 
-    return SafeArea(
-      child: Padding(
-        padding: EdgeInsets.only(
-          left: 16,
-          right: 16,
-          top: 12,
-          bottom: MediaQuery.viewInsetsOf(context).bottom + 18,
-        ),
-        child: ConstrainedBox(
-          constraints: BoxConstraints(maxHeight: screenHeight * 0.82),
-          child: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Center(
-                  child: Container(
-                    width: 42,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.34),
-                      borderRadius: BorderRadius.circular(99),
-                    ),
-                  ),
+    return AppSheetSurface(
+      padding: EdgeInsets.only(
+        left: 20,
+        right: 20,
+        top: 10,
+        bottom: MediaQuery.viewInsetsOf(context).bottom + 18,
+      ),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(maxHeight: screenHeight * 0.82),
+        child: SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              AppSheetHeader(
+                title: context.tr('edit_budget_category'),
+                icon: Icons.edit_outlined,
+              ),
+              const AppFormControlGap(),
+              _FocusOnlyLabelTextField(
+                controller: _nameController,
+                focusNode: _nameFocusNode,
+                label: context.tr('budget_category_name'),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  onPressed: _submit,
+                  child: Text(context.tr('save_changes')),
                 ),
-                const SizedBox(height: 16),
-                Text(
-                  context.tr('edit_budget_category'),
-                  style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                    color: Colors.white,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _FocusOnlyLabelTextField(
-                  controller: _nameController,
-                  focusNode: _nameFocusNode,
-                  label: context.tr('budget_category_name'),
-                ),
-                const SizedBox(height: 16),
-                SizedBox(
-                  width: double.infinity,
-                  child: FilledButton(
-                    onPressed: _submit,
-                    child: Text(context.tr('save_changes')),
-                  ),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
         ),
       ),
@@ -139,7 +125,7 @@ class _FocusOnlyLabelTextField extends StatelessWidget {
         labelText: label,
         floatingLabelBehavior: FloatingLabelBehavior.always,
         filled: true,
-        fillColor: Colors.white,
+        fillColor: AppColors.background,
         labelStyle: TextStyle(color: AppColors.textSecondary),
         floatingLabelStyle: TextStyle(
           color: AppColors.primary,

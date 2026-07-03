@@ -5,6 +5,7 @@ import '../../../../../core/formatters/date_formatter.dart';
 import '../../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../../core/localization/app_localizations.dart';
 import '../../../domain/entities/transaction_item.dart';
+import '../transaction_type_icon.dart';
 
 class TransactionTile extends StatelessWidget {
   final TransactionItem transaction;
@@ -28,7 +29,7 @@ class TransactionTile extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const _ExpenseCardIcon(),
+            const TransactionTypeIcon(isIncome: false),
             const SizedBox(width: 12),
             Expanded(
               child: Column(
@@ -85,42 +86,6 @@ class TransactionTile extends StatelessWidget {
             ),
           ],
         ),
-      ),
-    );
-  }
-}
-
-class _ExpenseCardIcon extends StatelessWidget {
-  const _ExpenseCardIcon();
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 38,
-      height: 38,
-      decoration: BoxDecoration(
-        color: AppColors.danger.withValues(alpha: 0.12),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Icon(Icons.credit_card_outlined, color: AppColors.danger, size: 22),
-          Positioned(
-            right: 7,
-            bottom: 7,
-            child: Container(
-              width: 12,
-              height: 12,
-              decoration: BoxDecoration(
-                color: AppColors.danger,
-                shape: BoxShape.circle,
-                border: Border.all(color: Colors.white, width: 1.4),
-              ),
-              child: const Icon(Icons.remove, color: Colors.white, size: 9),
-            ),
-          ),
-        ],
       ),
     );
   }

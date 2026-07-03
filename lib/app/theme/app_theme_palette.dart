@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 
 class AppThemePalette {
   final String id;
-  final String name;
+  final String nameKey;
   final String description;
   final Color primary;
   final Color secondary;
@@ -21,7 +21,7 @@ class AppThemePalette {
 
   const AppThemePalette({
     required this.id,
-    required this.name,
+    required this.nameKey,
     required this.description,
     required this.primary,
     required this.secondary,
@@ -59,7 +59,7 @@ class AppThemePalette {
 class AppThemePalettes {
   static const tealBalance = AppThemePalette(
     id: 'teal_balance',
-    name: 'Teal Balance',
+    nameKey: 'theme_teal_balance',
     description: 'fresh_modern_and_closest_to_dokido_s_identity',
     primary: Color(0xFF007979),
     secondary: Color(0xFF24B1B1),
@@ -79,7 +79,7 @@ class AppThemePalettes {
 
   static const freshMint = AppThemePalette(
     id: 'fresh_mint',
-    name: 'Fresh Mint',
+    nameKey: 'theme_fresh_mint',
     description: 'calm_fresh_green_and_comfortable_for_daily_use',
     primary: Color(0xFF659287),
     secondary: Color(0xFF88BDA4),
@@ -99,7 +99,7 @@ class AppThemePalettes {
 
   static const roseLedger = AppThemePalette(
     id: 'rose_ledger',
-    name: 'Rose Ledger',
+    nameKey: 'theme_rose_ledger',
     description: 'warm_personal_with_a_strong_accent',
     primary: Color(0xFF850E35),
     secondary: Color(0xFFEE6983),
@@ -119,7 +119,7 @@ class AppThemePalettes {
 
   static const sageBudget = AppThemePalette(
     id: 'sage_budget',
-    name: 'Sage Budget',
+    nameKey: 'theme_sage_budget',
     description: 'natural_soft_and_stable',
     primary: Color(0xFF89986D),
     secondary: Color(0xFF9CAB84),
@@ -139,7 +139,7 @@ class AppThemePalettes {
 
   static const softLinen = AppThemePalette(
     id: 'soft_linen',
-    name: 'Soft Linen',
+    nameKey: 'theme_soft_linen',
     description: 'minimal_clean_and_calm_for_tidy_tracking',
     primary: Color(0xFFC9B59C),
     secondary: Color(0xFFD9CFC7),
@@ -159,7 +159,7 @@ class AppThemePalettes {
 
   static const warmSignal = AppThemePalette(
     id: 'warm_signal',
-    name: 'Warm Signal',
+    nameKey: 'theme_warm_signal',
     description: 'bright_clean_with_a_bold_accent',
     primary: Color(0xFFF62440),
     secondary: Color(0xFFFFE5BF),
@@ -179,7 +179,7 @@ class AppThemePalettes {
 
   static const lavenderCalm = AppThemePalette(
     id: 'lavender_calm',
-    name: 'Lavender Calm',
+    nameKey: 'theme_lavender_calm',
     description: 'soft_lavender_with_warm_balance',
     primary: Color(0xFF8294C4),
     secondary: Color(0xFFACB1D6),
@@ -199,7 +199,7 @@ class AppThemePalettes {
 
   static const coastalBlue = AppThemePalette(
     id: 'coastal_blue',
-    name: 'Coastal Blue',
+    nameKey: 'theme_coastal_blue',
     description: 'cool_blue_clean_and_focused',
     primary: Color(0xFF355872),
     secondary: Color(0xFF7AAACE),
@@ -219,7 +219,7 @@ class AppThemePalettes {
 
   static const electricBlue = AppThemePalette(
     id: 'electric_blue',
-    name: 'Electric Blue',
+    nameKey: 'theme_electric_blue',
     description: 'bright_blue_for_clear_financial_focus',
     primary: Color(0xFF2C5EAD),
     secondary: Color(0xFF1591DC),
@@ -239,7 +239,7 @@ class AppThemePalettes {
 
   static const blushMauve = AppThemePalette(
     id: 'blush_mauve',
-    name: 'Blush Mauve',
+    nameKey: 'theme_blush_mauve',
     description: 'soft_blush_with_a_personal_feel',
     primary: Color(0xFFC5B3D3),
     secondary: Color(0xFFF5CBCB),
@@ -259,7 +259,7 @@ class AppThemePalettes {
 
   static const mintGlow = AppThemePalette(
     id: 'mint_glow',
-    name: 'Mint Glow',
+    nameKey: 'theme_mint_glow',
     description: 'fresh_mint_with_a_light_sunny_accent',
     primary: Color(0xFF34908B),
     secondary: Color(0xFF6FBEB2),
@@ -279,7 +279,7 @@ class AppThemePalettes {
 
   static const olivePaper = AppThemePalette(
     id: 'olive_paper',
-    name: 'Olive Paper',
+    nameKey: 'theme_olive_paper',
     description: 'muted_green_with_soft_paper_tones',
     primary: Color(0xFF778873),
     secondary: Color(0xFFA1BC98),
@@ -299,7 +299,7 @@ class AppThemePalettes {
 
   static const forestMint = AppThemePalette(
     id: 'forest_mint',
-    name: 'Forest Mint',
+    nameKey: 'theme_forest_mint',
     description: 'deep_green_with_mint_highlights',
     primary: Color(0xFF1A312C),
     secondary: Color(0xFF428475),

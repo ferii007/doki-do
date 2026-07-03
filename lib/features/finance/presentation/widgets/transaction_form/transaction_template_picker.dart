@@ -5,6 +5,7 @@ import '../../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../../core/localization/app_localizations.dart';
 import '../../../domain/entities/transaction_template.dart';
 import '../../../domain/entities/transaction_type.dart';
+import '../transaction_type_icon.dart';
 
 class TransactionTemplatePicker extends StatelessWidget {
   final List<TransactionTemplate> templates;
@@ -91,20 +92,8 @@ class _TemplateChipCard extends StatelessWidget {
         ),
         child: Row(
           children: [
-            Container(
-              width: 38,
-              height: 38,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
-                borderRadius: BorderRadius.circular(13),
-              ),
-              child: Icon(
-                template.type == TransactionType.income
-                    ? Icons.trending_up_rounded
-                    : Icons.trending_down_rounded,
-                color: color,
-                size: 21,
-              ),
+            TransactionTypeIcon(
+              isIncome: template.type == TransactionType.income,
             ),
             const SizedBox(width: 10),
             Expanded(

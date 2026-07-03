@@ -28,4 +28,12 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
   Future<void> completeSetup(AppSettings settings) async {
     await save(settings.copyWith(hasCompletedSetup: true));
   }
+
+  Future<void> toggleFinancialPrivacy() async {
+    final settings = state.asData?.value;
+    if (settings == null) return;
+    await save(
+      settings.copyWith(hideFinancialAmounts: !settings.hideFinancialAmounts),
+    );
+  }
 }

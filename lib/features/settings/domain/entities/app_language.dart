@@ -1,11 +1,11 @@
 enum AppLanguage {
-  id(code: 'id', label: 'Indonesia'),
-  en(code: 'en', label: 'English');
+  id(code: 'id', labelKey: 'language_indonesian'),
+  en(code: 'en', labelKey: 'language_english');
 
   final String code;
-  final String label;
+  final String labelKey;
 
-  const AppLanguage({required this.code, required this.label});
+  const AppLanguage({required this.code, required this.labelKey});
 
   static AppLanguage byCode(String code) {
     return values.firstWhere(

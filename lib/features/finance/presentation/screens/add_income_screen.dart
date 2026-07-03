@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/router.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/formatters/currency_input_formatter.dart';
+import '../../../../core/layout/app_spacing.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -105,7 +106,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
                 },
               ),
               if (templates != null && templates.isNotEmpty) ...[
-                const SizedBox(height: 12),
+                const AppFormControlGap(),
                 TransactionTemplatePicker(
                   templates: templates,
                   type: TransactionType.income,
@@ -122,21 +123,24 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
                   },
                 ),
               ],
-              const SizedBox(height: 12),
+              if (templates != null && templates.isNotEmpty)
+                const AppFormControlGap()
+              else
+                const AppFormFieldGap(),
               AmountInput(controller: _amountController),
-              const SizedBox(height: 12),
+              const AppFormFieldGap(),
               TransactionNoteField(
                 controller: _titleController,
                 label: context.tr('where_did_this_money_come_from'),
               ),
-              const SizedBox(height: 12),
+              const AppFormControlGap(),
               TransactionDatePicker(
                 date: _date,
                 firstDate: selectedPeriod.startDate,
                 lastDate: selectedPeriod.endDate,
                 onChanged: (value) => setState(() => _date = value),
               ),
-              const SizedBox(height: 12),
+              const AppFormControlGap(),
               TransactionTemplateSaveOptions(
                 saveAsTemplate: _saveAsTemplate,
                 saveAsRecurring: _saveAsRecurring,

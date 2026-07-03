@@ -12,6 +12,8 @@ class PeriodSummaryCard extends StatelessWidget {
   final VoidCallback? onPeriodTap;
   final VoidCallback? onIncomeTap;
   final VoidCallback? onExpenseTap;
+  final bool amountsHidden;
+  final VoidCallback? onPrivacyToggle;
 
   const PeriodSummaryCard({
     super.key,
@@ -20,6 +22,8 @@ class PeriodSummaryCard extends StatelessWidget {
     this.onPeriodTap,
     this.onIncomeTap,
     this.onExpenseTap,
+    this.amountsHidden = false,
+    this.onPrivacyToggle,
   });
 
   @override
@@ -71,9 +75,19 @@ class PeriodSummaryCard extends StatelessWidget {
                       color: Colors.white.withValues(alpha: 0.28),
                     ),
                   ),
-                  child: const Icon(
-                    Icons.bar_chart_rounded,
-                    color: Colors.white,
+                  child: IconButton(
+                    tooltip: context.tr(
+                      amountsHidden
+                          ? 'show_financial_amounts'
+                          : 'hide_financial_amounts',
+                    ),
+                    onPressed: onPrivacyToggle,
+                    icon: Icon(
+                      amountsHidden
+                          ? Icons.visibility_off_outlined
+                          : Icons.visibility_outlined,
+                      color: Colors.white,
+                    ),
                   ),
                 ),
               ],

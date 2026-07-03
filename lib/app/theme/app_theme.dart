@@ -97,10 +97,11 @@ class AppTheme {
         ),
       ),
       bottomSheetTheme: BottomSheetThemeData(
-        backgroundColor: AppColors.sheet,
-        modalBackgroundColor: AppColors.sheet,
+        backgroundColor: Colors.transparent,
+        modalBackgroundColor: Colors.transparent,
+        surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(18)),
+          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
         ),
       ),
     );

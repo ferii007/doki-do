@@ -10,6 +10,7 @@ class AppSettings {
   final String themeId;
   final String languageCode;
   final String currencyCode;
+  final bool hideFinancialAmounts;
 
   const AppSettings({
     required this.hasCompletedSetup,
@@ -19,6 +20,7 @@ class AppSettings {
     required this.themeId,
     required this.languageCode,
     required this.currencyCode,
+    required this.hideFinancialAmounts,
   });
 
   factory AppSettings.defaults() {
@@ -26,10 +28,11 @@ class AppSettings {
       hasCompletedSetup: false,
       displayName: '',
       email: 'feri@dokido.local',
-      userType: 'Pengguna dengan periode keuangan fleksibel',
+      userType: 'flexible_financial_period_user',
       themeId: 'teal_balance',
       languageCode: 'id',
       currencyCode: 'IDR',
+      hideFinancialAmounts: false,
     );
   }
 
@@ -44,6 +47,9 @@ class AppSettings {
       themeId: json['theme_id'] as String? ?? defaults.themeId,
       languageCode: json['language_code'] as String? ?? defaults.languageCode,
       currencyCode: json['currency_code'] as String? ?? defaults.currencyCode,
+      hideFinancialAmounts:
+          json['hide_financial_amounts'] as bool? ??
+          defaults.hideFinancialAmounts,
     );
   }
 
@@ -56,6 +62,7 @@ class AppSettings {
       'theme_id': themeId,
       'language_code': languageCode,
       'currency_code': currencyCode,
+      'hide_financial_amounts': hideFinancialAmounts,
     };
   }
 
@@ -71,6 +78,7 @@ class AppSettings {
     String? themeId,
     String? languageCode,
     String? currencyCode,
+    bool? hideFinancialAmounts,
   }) {
     return AppSettings(
       hasCompletedSetup: hasCompletedSetup ?? this.hasCompletedSetup,
@@ -80,6 +88,7 @@ class AppSettings {
       themeId: themeId ?? this.themeId,
       languageCode: languageCode ?? this.languageCode,
       currencyCode: currencyCode ?? this.currencyCode,
+      hideFinancialAmounts: hideFinancialAmounts ?? this.hideFinancialAmounts,
     );
   }
 }

@@ -1,5 +1,5 @@
 class AccountProfileSchema {
   static const displayName = 'Feri Ganteng 123';
   static const email = 'feri@dokido.local';
-  static const userType = 'Pengguna dengan periode keuangan fleksibel';
+  static const userType = 'flexible_financial_period_user';
 }
