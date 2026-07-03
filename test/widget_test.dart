@@ -6,6 +6,9 @@ import 'package:google_fonts/google_fonts.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
 import 'package:doki_do/app/app.dart';
+import 'package:doki_do/core/security/encrypted_storage.dart';
+import 'package:doki_do/features/settings/data/datasources/settings_local_datasource.dart';
+import 'package:doki_do/features/settings/presentation/providers/app_settings_provider.dart';
 
 void main() {
   late Directory tempDirectory;
@@ -25,7 +28,20 @@ void main() {
   });
 
   testWidgets('renders DokiDo app root', (tester) async {
-    await tester.pumpWidget(const ProviderScope(child: DokiDoApp()));
+    await tester.pumpWidget(
+      ProviderScope(
+        overrides: [
+          settingsLocalDatasourceProvider.overrideWithValue(
+            SettingsLocalDatasource(
+              encryptedStorage: EncryptedStorage(
+                keyStore: MemoryEncryptionKeyStore(),
+              ),
+            ),
+          ),
+        ],
+        child: const DokiDoApp(),
+      ),
+    );
     await tester.pump(const Duration(seconds: 1));
 
     expect(find.byType(DokiDoApp), findsOneWidget);

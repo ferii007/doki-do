@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../core/formatters/date_formatter.dart';
 import '../core/formatters/rupiah_formatter.dart';
 import '../core/localization/app_localizations.dart';
+import '../core/widgets/error_view.dart';
 import '../features/finance/presentation/screens/dashboard_screen.dart';
 import '../features/settings/domain/entities/app_settings.dart';
 import '../features/settings/domain/entities/app_language.dart';
@@ -184,16 +185,6 @@ class _AppBootError extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(24),
-          child: Text(
-            context.trf('failed_to_load_settings_error', {'error': error}),
-            textAlign: TextAlign.center,
-          ),
-        ),
-      ),
-    );
+    return Scaffold(body: ErrorView(error: error));
   }
 }

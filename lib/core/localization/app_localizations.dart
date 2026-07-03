@@ -80,6 +80,9 @@ extension AppLocalizationsX on BuildContext {
 
 const _id = <String, String>{
   'failed_to_load_settings_error': 'Settings gagal dibaca: {error}',
+  'storage_recovery_failed': 'Data Tidak Dapat Dipulihkan',
+  'storage_recovery_failed_description':
+      'File utama dan cadangan tidak dapat dibaca. Data asli tetap dipertahankan dan tidak ditimpa. Jangan hapus aplikasi sebelum file diperiksa atau dipulihkan.',
   'delete': 'Hapus',
   'cancel': 'Batal',
   'edit': 'Edit',
@@ -626,6 +629,9 @@ const _id = <String, String>{
 
 const _en = <String, String>{
   'failed_to_load_settings_error': 'Failed to load settings: {error}',
+  'storage_recovery_failed': 'Data Could Not Be Recovered',
+  'storage_recovery_failed_description':
+      'The primary and backup files could not be read. The original data has been preserved and was not overwritten. Do not uninstall the app before the files are inspected or recovered.',
   'delete': 'Delete',
   'cancel': 'Cancel',
   'edit': 'Edit',

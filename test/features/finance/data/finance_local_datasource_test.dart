@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:doki_do/core/security/encrypted_storage.dart';
+import 'package:doki_do/core/storage/atomic_file_writer.dart';
+import 'package:doki_do/core/storage/resilient_encrypted_file_store.dart';
 import 'package:doki_do/features/finance/data/datasources/finance_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -63,7 +66,8 @@ void main() {
       }),
     );
 
-    final datasource = FinanceLocalDatasource();
+    final encryption = EncryptedStorage(keyStore: MemoryEncryptionKeyStore());
+    final datasource = FinanceLocalDatasource(encryptedStorage: encryption);
     final periods = await datasource.getBudgetPeriods();
     final templates = await datasource.getTransactionTemplates();
 
@@ -71,7 +75,118 @@ void main() {
         (periods.single['categories'] as List).single as Map<String, dynamic>;
     expect(category['category_name'], 'Kebutuhan Harian');
     expect(templates.single['preferred_category_name'], 'Kebutuhan Harian');
+
+    final migratedFile = await file.readAsString();
+    final envelope = jsonDecode(migratedFile) as Map<String, dynamic>;
+    expect(envelope['format'], 'dokido-aes-gcm');
+    expect(migratedFile, isNot(contains('Kebutuhan Harian')));
+    expect(migratedFile, isNot(contains('100000')));
+    final backupContent = await AtomicFileWriter.backupFor(file).readAsString();
+    expect(backupContent, contains('"format":"dokido-aes-gcm"'));
+    expect(backupContent, isNot(contains('100000')));
+    final decrypted = await encryption.decrypt(migratedFile, scope: 'finance');
+    final migratedJson =
+        jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
+    expect(migratedJson['schema_version'], 1);
   });
+
+  test(
+    'does not overwrite encrypted data when the key is unavailable',
+    () async {
+      final file = File('${tempDirectory.path}/doki_do_finance.json');
+      final writer = FinanceLocalDatasource(
+        encryptedStorage: EncryptedStorage(
+          keyStore: MemoryEncryptionKeyStore(),
+        ),
+      );
+      await writer.getBudgetPeriods();
+      final encryptedBeforeRead = await file.readAsString();
+
+      final readerWithWrongKey = FinanceLocalDatasource(
+        encryptedStorage: EncryptedStorage(
+          keyStore: MemoryEncryptionKeyStore(),
+        ),
+      );
+
+      await expectLater(
+        readerWithWrongKey.getBudgetPeriods(),
+        throwsA(isA<StorageRecoveryException>()),
+      );
+      expect(await file.readAsString(), encryptedBeforeRead);
+    },
+  );
+
+  test('restores the last valid backup when the primary is corrupt', () async {
+    final file = File('${tempDirectory.path}/doki_do_finance.json');
+    final keyStore = MemoryEncryptionKeyStore();
+    final encryption = EncryptedStorage(keyStore: keyStore);
+    await FinanceLocalDatasource(
+      encryptedStorage: encryption,
+    ).getBudgetPeriods();
+    await file.writeAsString('corrupt-primary');
+
+    final periods = await FinanceLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    ).getBudgetPeriods();
+
+    expect(periods, isEmpty);
+    final restored = await file.readAsString();
+    expect(restored, isNot('corrupt-primary'));
+    final decrypted = await encryption.decrypt(restored, scope: 'finance');
+    expect(jsonDecode(decrypted.plaintext), isA<Map<String, dynamic>>());
+  });
+
+  test(
+    'restores backup when encrypted primary fails domain validation',
+    () async {
+      final file = File('${tempDirectory.path}/doki_do_finance.json');
+      final keyStore = MemoryEncryptionKeyStore();
+      final encryption = EncryptedStorage(keyStore: keyStore);
+      await FinanceLocalDatasource(
+        encryptedStorage: encryption,
+      ).getBudgetPeriods();
+      final invalidPrimary = await encryption.encrypt(
+        jsonEncode({
+          'schema_version': 1,
+          'current_period_id': 'missing-period',
+          'periods': [
+            {'period_id': 'broken'},
+          ],
+          'transaction_templates': [],
+        }),
+        scope: 'finance',
+      );
+      await file.writeAsString(invalidPrimary);
+
+      final periods = await FinanceLocalDatasource(
+        encryptedStorage: EncryptedStorage(keyStore: keyStore),
+      ).getBudgetPeriods();
+
+      expect(periods, isEmpty);
+    },
+  );
+
+  test(
+    'does not erase files when the primary and backup are corrupt',
+    () async {
+      final file = File('${tempDirectory.path}/doki_do_finance.json');
+      final backup = AtomicFileWriter.backupFor(file);
+      await file.writeAsString('corrupt-primary');
+      await backup.writeAsString('corrupt-backup');
+
+      await expectLater(
+        FinanceLocalDatasource(
+          encryptedStorage: EncryptedStorage(
+            keyStore: MemoryEncryptionKeyStore(),
+          ),
+        ).getBudgetPeriods(),
+        throwsA(isA<StorageRecoveryException>()),
+      );
+
+      expect(await file.readAsString(), 'corrupt-primary');
+      expect(await backup.readAsString(), 'corrupt-backup');
+    },
+  );
 }
 
 class _FakePathProviderPlatform extends PathProviderPlatform {

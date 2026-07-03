@@ -6,15 +6,27 @@ import 'package:uuid/uuid.dart';
 
 import '../../../../core/formatters/date_formatter.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/security/encrypted_storage.dart';
+import '../../../../core/storage/async_write_queue.dart';
+import '../../../../core/storage/resilient_encrypted_file_store.dart';
 import '../../../settings/domain/entities/app_language.dart';
 import '../../domain/entities/budget_allocation_draft.dart';
 import '../local/empty_finance_data.dart';
 
 class FinanceLocalDatasource {
+  static const _schemaVersion = 1;
   static const _storageFileName = 'doki_do_finance.json';
+  static const _encryptionScope = 'finance';
 
   final _uuid = const Uuid();
+  final ResilientEncryptedFileStore _fileStore;
+  final _writeQueue = AsyncWriteQueue();
   Map<String, dynamic>? _database;
+
+  FinanceLocalDatasource({EncryptedStorage? encryptedStorage})
+    : _fileStore = ResilientEncryptedFileStore(
+        encryptedStorage: encryptedStorage ?? EncryptedStorage.instance,
+      );
 
   Future<Map<String, dynamic>?> getCurrentBudget() async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
@@ -558,33 +570,77 @@ class FinanceLocalDatasource {
     if (_database != null) return _database!;
 
     final file = await _storageFile();
-    if (!await file.exists()) {
+    final stored = await _fileStore.read(
+      file,
+      scope: _encryptionScope,
+      validate: _validateStoredJson,
+    );
+    if (stored == null) {
       _database = createEmptyFinanceData();
       await _saveDatabase();
       return _database!;
     }
 
-    try {
-      final raw = await file.readAsString();
-      final decoded = jsonDecode(raw);
-      if (decoded is! Map<String, dynamic>) {
-        throw const FormatException('Finance storage root must be an object.');
-      }
-      _database = _normalizeDatabase(decoded);
-      await _saveDatabase();
-      return _database!;
-    } on FormatException {
-      _database = createEmptyFinanceData();
-      await _saveDatabase();
-      return _database!;
-    }
+    final decoded = jsonDecode(stored.plaintext) as Map<String, dynamic>;
+    _database = _normalizeDatabase(_migrateDatabase(decoded));
+    await _saveDatabase(preserveExistingAsBackup: stored.wasEncrypted);
+    return _database!;
   }
 
-  Future<void> _saveDatabase() async {
+  void _validateStoredJson(String plaintext) {
+    final decoded = jsonDecode(plaintext);
+    if (decoded is! Map<String, dynamic>) {
+      throw const FormatException('Finance storage root must be an object.');
+    }
+    if (decoded['periods'] is! List) {
+      throw const FormatException('Finance periods must be a list.');
+    }
+    if (decoded['transaction_templates'] != null &&
+        decoded['transaction_templates'] is! List) {
+      throw const FormatException(
+        'Finance transaction templates must be a list.',
+      );
+    }
+    final normalized = _normalizeDatabase(_migrateDatabase(decoded));
+    _validateDatabase(normalized);
+  }
+
+  Map<String, dynamic> _migrateDatabase(Map<String, dynamic> database) {
+    var version = database['schema_version'] as int? ?? 0;
+    if (version > _schemaVersion) {
+      throw FormatException(
+        'Finance schema version $version is newer than supported version '
+        '$_schemaVersion.',
+      );
+    }
+
+    while (version < _schemaVersion) {
+      switch (version) {
+        case 0:
+          database['schema_version'] = 1;
+          version = 1;
+        default:
+          throw FormatException(
+            'No finance migration exists from schema version $version.',
+          );
+      }
+    }
+    return database;
+  }
+
+  Future<void> _saveDatabase({bool preserveExistingAsBackup = true}) async {
+    final database = _database ?? createEmptyFinanceData();
+    _validateDatabase(database);
     final file = await _storageFile();
     final encoder = const JsonEncoder.withIndent('  ');
-    await file.writeAsString(
-      encoder.convert(_database ?? createEmptyFinanceData()),
+    final plaintext = encoder.convert(database);
+    return _writeQueue.run(
+      () => _fileStore.write(
+        file,
+        plaintext,
+        scope: _encryptionScope,
+        preserveExistingAsBackup: preserveExistingAsBackup,
+      ),
     );
   }
 
@@ -686,6 +742,135 @@ class FinanceLocalDatasource {
         : (periods.isEmpty ? null : periods.first['period_id']);
 
     return normalized;
+  }
+
+  void _validateDatabase(Map<String, dynamic> database) {
+    if (database['schema_version'] != _schemaVersion) {
+      throw const FormatException('Finance schema version is invalid.');
+    }
+    final periods = database['periods'];
+    final templates = database['transaction_templates'];
+    if (periods is! List<Map<String, dynamic>> ||
+        templates is! List<Map<String, dynamic>>) {
+      throw const FormatException('Finance collections are invalid.');
+    }
+
+    final periodIds = <String>{};
+    final transactionIds = <String>{};
+    for (final period in periods) {
+      final periodId = period['period_id'];
+      final startValue = period['start_date'];
+      final endValue = period['end_date'];
+      if (periodId is! String ||
+          periodId.isEmpty ||
+          !periodIds.add(periodId) ||
+          startValue is! String ||
+          endValue is! String) {
+        throw const FormatException('A finance period is invalid.');
+      }
+      final start = DateTime.tryParse(startValue);
+      final end = DateTime.tryParse(endValue);
+      if (start == null || end == null || end.isBefore(start)) {
+        throw FormatException('Finance period "$periodId" has invalid dates.');
+      }
+
+      final categories = period['categories'];
+      final transactions = period['transactions'];
+      final adjustments = period['category_adjustments'];
+      if (categories is! List<Map<String, dynamic>> ||
+          transactions is! List<Map<String, dynamic>> ||
+          adjustments is! List<Map<String, dynamic>>) {
+        throw FormatException(
+          'Finance period "$periodId" has invalid collections.',
+        );
+      }
+
+      final categoryIds = <String>{};
+      for (final category in categories) {
+        final categoryId = category['category_id'];
+        if (categoryId is! String ||
+            categoryId.isEmpty ||
+            !categoryIds.add(categoryId) ||
+            category['category_name'] is! String ||
+            category['allocated_amount'] is! int ||
+            category['remaining_amount'] is! int) {
+          throw FormatException(
+            'Finance period "$periodId" has an invalid category.',
+          );
+        }
+      }
+
+      for (final transaction in transactions) {
+        final transactionId = transaction['transaction_id'];
+        final type = transaction['type'];
+        final categoryId = transaction['category_id'];
+        if (transactionId is! String ||
+            transactionId.isEmpty ||
+            !transactionIds.add(transactionId) ||
+            transaction['title'] is! String ||
+            transaction['amount'] is! int ||
+            (transaction['amount'] as int) < 0 ||
+            transaction['date'] is! String ||
+            DateTime.tryParse(transaction['date'] as String) == null ||
+            (type != 'income' && type != 'expense') ||
+            (categoryId != null && !categoryIds.contains(categoryId))) {
+          throw FormatException(
+            'Finance period "$periodId" has an invalid transaction.',
+          );
+        }
+      }
+
+      final adjustmentIds = <String>{};
+      for (final adjustment in adjustments) {
+        final adjustmentId = adjustment['adjustment_id'];
+        final categoryId = adjustment['category_id'];
+        final relatedCategoryId = adjustment['related_category_id'];
+        final type = adjustment['type'];
+        if (adjustmentId is! String ||
+            adjustmentId.isEmpty ||
+            !adjustmentIds.add(adjustmentId) ||
+            categoryId is! String ||
+            !categoryIds.contains(categoryId) ||
+            (relatedCategoryId != null &&
+                !categoryIds.contains(relatedCategoryId)) ||
+            (type != 'increase' && type != 'decrease' && type != 'set') ||
+            adjustment['amount'] is! int ||
+            (adjustment['amount'] as int) < 0 ||
+            adjustment['delta_amount'] is! int ||
+            adjustment['previous_amount'] is! int ||
+            adjustment['new_amount'] is! int ||
+            adjustment['reason'] is! String ||
+            adjustment['date'] is! String ||
+            DateTime.tryParse(adjustment['date'] as String) == null) {
+          throw FormatException(
+            'Finance period "$periodId" has an invalid adjustment.',
+          );
+        }
+      }
+    }
+
+    final currentPeriodId = database['current_period_id'];
+    if (currentPeriodId != null && !periodIds.contains(currentPeriodId)) {
+      throw const FormatException('Current finance period is invalid.');
+    }
+
+    final templateIds = <String>{};
+    for (final template in templates) {
+      final templateId = template['transaction_template_id'];
+      final day = template['day_of_month'];
+      if (templateId is! String ||
+          templateId.isEmpty ||
+          !templateIds.add(templateId) ||
+          template['title'] is! String ||
+          template['amount'] is! int ||
+          (template['amount'] as int) <= 0 ||
+          (template['type'] != 'income' && template['type'] != 'expense') ||
+          template['created_at'] is! String ||
+          DateTime.tryParse(template['created_at'] as String) == null ||
+          (day != null && (day is! int || day < 1 || day > 31))) {
+        throw const FormatException('A transaction template is invalid.');
+      }
+    }
   }
 
   dynamic _migrateDefaultCategoryName(dynamic value) {
