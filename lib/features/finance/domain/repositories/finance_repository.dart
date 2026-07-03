@@ -2,6 +2,7 @@ import '../entities/budget_period.dart';
 import '../entities/budget_allocation_draft.dart';
 import '../entities/budget_snapshot.dart';
 import '../entities/transaction_template.dart';
+import '../entities/recurring_occurrence.dart';
 
 abstract class FinanceRepository {
   Future<BudgetSnapshot?> getCurrentBudget();
@@ -12,6 +13,8 @@ abstract class FinanceRepository {
 
   Future<List<TransactionTemplate>> getTransactionTemplates();
 
+  Future<List<RecurringOccurrence>> getRecurringOccurrences();
+
   Future<void> saveTransactionTemplate({
     String? templateId,
     required String type,
@@ -19,9 +22,26 @@ abstract class FinanceRepository {
     required int amount,
     String? preferredCategoryName,
     int? dayOfMonth,
+    bool isActive = true,
+    DateTime? activeFromDate,
+    DateTime? endDate,
+    bool reminderEnabled = true,
+    int reminderHour = 9,
+    int reminderMinute = 0,
   });
 
   Future<void> deleteTransactionTemplate(String templateId);
+
+  Future<void> setTransactionTemplateActive({
+    required String templateId,
+    required bool isActive,
+    required DateTime changedAt,
+  });
+
+  Future<void> skipRecurringOccurrence({
+    required String templateId,
+    required DateTime dueDate,
+  });
 
   Future<BudgetPeriod> addBudgetPeriod({
     required DateTime startDate,
@@ -38,6 +58,8 @@ abstract class FinanceRepository {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   });
 
   Future<void> updateIncome({
@@ -54,6 +76,8 @@ abstract class FinanceRepository {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   });
 
   Future<void> updateExpense({

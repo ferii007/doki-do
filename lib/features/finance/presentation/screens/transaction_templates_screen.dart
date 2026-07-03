@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../app/theme/app_colors.dart';
 import '../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/delete_confirmation_dialog.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -11,6 +12,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/transaction_template.dart';
 import '../../domain/entities/transaction_type.dart';
 import '../providers/transaction_template_provider.dart';
+import '../widgets/transaction_form/recurring_template_edit_sheet.dart';
 import '../widgets/transaction_type_icon.dart';
 
 class TransactionTemplatesScreen extends ConsumerWidget {
@@ -141,6 +143,16 @@ class _TemplateCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    final ended =
+        template.endDate != null &&
+        (!template.isActive ||
+            DateTime(
+              template.endDate!.year,
+              template.endDate!.month,
+              template.endDate!.day,
+            ).isBefore(today));
     final color = template.type == TransactionType.income
         ? AppColors.secondary
         : AppColors.danger;
@@ -152,6 +164,8 @@ class _TemplateCard extends ConsumerWidget {
         template.preferredCategoryName!,
       if (template.dayOfMonth != null)
         context.trf('every_day_of_month', {'day': template.dayOfMonth!}),
+      if (template.isRecurring)
+        context.tr(ended ? 'ended' : (template.isActive ? 'active' : 'paused')),
     ].join(' • ');
 
     return Container(
@@ -211,20 +225,141 @@ class _TemplateCard extends ConsumerWidget {
           ),
           const SizedBox(width: 10),
           IconButton(
-            tooltip: context.tr('delete'),
-            style: IconButton.styleFrom(
-              backgroundColor: AppColors.danger.withValues(alpha: 0.1),
-              foregroundColor: AppColors.danger,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(14),
-              ),
+            tooltip: context.tr(
+              template.isRecurring ? 'transaction_options' : 'delete',
             ),
-            onPressed: () => _delete(context, ref),
-            icon: const Icon(Icons.delete_outline_rounded),
+            style: _actionButtonStyle(
+              foreground: template.isRecurring
+                  ? AppColors.primary
+                  : AppColors.danger,
+              background: template.isRecurring
+                  ? AppColors.mintSurface
+                  : AppColors.danger.withValues(alpha: 0.1),
+            ),
+            onPressed: () => template.isRecurring
+                ? _showActions(context, ref, ended: ended)
+                : _delete(context, ref),
+            icon: Icon(
+              template.isRecurring
+                  ? Icons.more_horiz_rounded
+                  : Icons.delete_outline_rounded,
+            ),
           ),
         ],
       ),
     );
+  }
+
+  Future<void> _showActions(
+    BuildContext context,
+    WidgetRef ref, {
+    required bool ended,
+  }) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => _TemplateActionsSheet(
+        template: template,
+        ended: ended,
+        onEdit: () {
+          Navigator.pop(sheetContext);
+          _edit(context, ref);
+        },
+        onToggleActive: () {
+          Navigator.pop(sheetContext);
+          _toggleActive(context, ref);
+        },
+        onEnd: () {
+          Navigator.pop(sheetContext);
+          _end(context, ref);
+        },
+        onDelete: () {
+          Navigator.pop(sheetContext);
+          _delete(context, ref);
+        },
+      ),
+    );
+  }
+
+  ButtonStyle _actionButtonStyle({
+    required Color foreground,
+    required Color background,
+  }) {
+    return IconButton.styleFrom(
+      backgroundColor: background,
+      foregroundColor: foreground,
+      minimumSize: const Size(40, 40),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+    );
+  }
+
+  Future<void> _edit(BuildContext context, WidgetRef ref) async {
+    final result = await showModalBottomSheet<RecurringTemplateEditResult>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (_) => RecurringTemplateEditSheet(template: template),
+    );
+    if (result == null || !context.mounted) return;
+
+    await ref
+        .read(transactionTemplateActionProvider.notifier)
+        .save(
+          templateId: template.id,
+          type: template.type,
+          title: result.title,
+          amount: result.amount,
+          preferredCategoryName: result.preferredCategoryName,
+          dayOfMonth: result.dayOfMonth,
+          isActive: template.isActive,
+          activeFromDate: result.activeFromDate,
+          endDate: result.endDate,
+          reminderEnabled: result.reminderEnabled,
+          reminderHour: result.reminderHour,
+          reminderMinute: result.reminderMinute,
+        );
+    if (!context.mounted) return;
+    AppToast.show(context, context.tr('recurring_transaction_updated'));
+  }
+
+  Future<void> _toggleActive(BuildContext context, WidgetRef ref) async {
+    await ref
+        .read(transactionTemplateActionProvider.notifier)
+        .setActive(templateId: template.id, isActive: !template.isActive);
+    if (!context.mounted) return;
+    AppToast.show(
+      context,
+      context.tr(
+        template.isActive
+            ? 'recurring_transaction_paused'
+            : 'recurring_transaction_resumed',
+      ),
+    );
+  }
+
+  Future<void> _end(BuildContext context, WidgetRef ref) async {
+    final today = DateTime.now();
+    final endDate = today.isBefore(template.activeFromDate)
+        ? template.activeFromDate
+        : today;
+    await ref
+        .read(transactionTemplateActionProvider.notifier)
+        .save(
+          templateId: template.id,
+          type: template.type,
+          title: template.title,
+          amount: template.amount,
+          preferredCategoryName: template.preferredCategoryName,
+          dayOfMonth: template.dayOfMonth,
+          isActive: false,
+          activeFromDate: template.activeFromDate,
+          endDate: endDate,
+          reminderEnabled: false,
+          reminderHour: template.reminderHour,
+          reminderMinute: template.reminderMinute,
+        );
+    if (!context.mounted) return;
+    AppToast.show(context, context.tr('recurring_transaction_ended'));
   }
 
   Future<void> _delete(BuildContext context, WidgetRef ref) async {
@@ -242,5 +377,108 @@ class _TemplateCard extends ConsumerWidget {
         .delete(template.id);
     if (!context.mounted) return;
     AppToast.show(context, context.tr('transaction_template_deleted'));
+  }
+}
+
+class _TemplateActionsSheet extends StatelessWidget {
+  final TransactionTemplate template;
+  final bool ended;
+  final VoidCallback onEdit;
+  final VoidCallback onToggleActive;
+  final VoidCallback onEnd;
+  final VoidCallback onDelete;
+
+  const _TemplateActionsSheet({
+    required this.template,
+    required this.ended,
+    required this.onEdit,
+    required this.onToggleActive,
+    required this.onEnd,
+    required this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSheetSurface(
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetHeader(
+            title: context.tr('recurring_transaction_options'),
+            icon: Icons.event_repeat_rounded,
+          ),
+          const SizedBox(height: 16),
+          _TemplateActionTile(
+            icon: Icons.edit_outlined,
+            label: context.tr('edit_schedule'),
+            onTap: onEdit,
+          ),
+          if (!ended)
+            _TemplateActionTile(
+              icon: template.isActive
+                  ? Icons.pause_rounded
+                  : Icons.play_arrow_rounded,
+              label: context.tr(template.isActive ? 'pause' : 'resume'),
+              onTap: onToggleActive,
+            ),
+          if (!ended)
+            _TemplateActionTile(
+              icon: Icons.event_busy_outlined,
+              label: context.tr('end_schedule'),
+              onTap: onEnd,
+            ),
+          _TemplateActionTile(
+            icon: Icons.delete_outline_rounded,
+            label: context.tr('delete'),
+            color: AppColors.danger,
+            onTap: onDelete,
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TemplateActionTile extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final Color? color;
+  final VoidCallback onTap;
+
+  const _TemplateActionTile({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+    this.color,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final foreground = color ?? AppColors.textPrimary;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        margin: const EdgeInsets.only(bottom: 8),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 13),
+        decoration: BoxDecoration(
+          color: AppColors.background,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: AppColors.border),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: foreground, size: 21),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: foreground,
+                fontWeight: FontWeight.w800,
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }

@@ -9,6 +9,7 @@ import '../core/formatters/rupiah_formatter.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/widgets/error_view.dart';
 import '../features/finance/presentation/screens/dashboard_screen.dart';
+import '../features/finance/presentation/providers/recurring_notification_provider.dart';
 import '../features/settings/domain/entities/app_settings.dart';
 import '../features/settings/domain/entities/app_language.dart';
 import '../features/settings/presentation/providers/app_settings_provider.dart';
@@ -23,6 +24,7 @@ class DokiDoApp extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final settingsAsync = ref.watch(appSettingsProvider);
+    ref.watch(recurringNotificationBootstrapProvider);
     final settings = settingsAsync.asData?.value;
     final language = settings?.language ?? AppLanguage.id;
     FinancialPrivacyPreference.hideAmounts =

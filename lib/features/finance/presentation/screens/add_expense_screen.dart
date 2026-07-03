@@ -9,7 +9,9 @@ import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
+import '../../domain/entities/budget_period.dart';
 import '../../domain/entities/category_budget.dart';
+import '../../domain/entities/recurring_due_item.dart';
 import '../../domain/entities/transaction_template.dart';
 import '../../domain/entities/transaction_type.dart';
 import '../providers/current_budget_provider.dart';
@@ -42,13 +44,19 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
   bool _routeTemplateLoaded = false;
   bool _routeTemplateApplied = false;
   TransactionTemplate? _routeTemplate;
+  RecurringTransactionDraft? _recurringDraft;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_routeTemplateLoaded) return;
     final argument = ModalRoute.of(context)?.settings.arguments;
-    if (argument is TransactionTemplate &&
+    if (argument is RecurringTransactionDraft &&
+        argument.template.type == TransactionType.expense) {
+      _recurringDraft = argument;
+      _routeTemplate = argument.template;
+      _date = argument.dueDate;
+    } else if (argument is TransactionTemplate &&
         argument.type == TransactionType.expense) {
       _routeTemplate = argument;
     }
@@ -67,7 +75,13 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     final periodsAsync = ref.watch(budgetPeriodsProvider);
     final selectedDashboardPeriodId = ref.watch(selectedPeriodIdProvider);
     final isSaving = ref.watch(transactionActionProvider);
-    final activePeriodId = _periodId ?? selectedDashboardPeriodId;
+    final loadedPeriods = periodsAsync.asData?.value ?? const <BudgetPeriod>[];
+    final recurringPeriodId = _findPeriodForDate(
+      loadedPeriods,
+      _recurringDraft?.dueDate,
+    )?.id;
+    final activePeriodId =
+        _periodId ?? recurringPeriodId ?? selectedDashboardPeriodId;
     final templates = ref.watch(transactionTemplatesProvider).asData?.value;
     final budgetAsync = activePeriodId == null
         ? ref.watch(currentBudgetProvider)
@@ -84,8 +98,9 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
           }
 
           _periodId ??=
+              _findPeriodForDate(periods, _recurringDraft?.dueDate)?.id ??
               selectedDashboardPeriodId ??
-              (periods.isEmpty ? null : periods.first.id);
+              periods.first.id;
 
           return budgetAsync.when(
             loading: () => const LoadingView(),
@@ -231,26 +246,35 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     }
 
     final categoryName = _findCategoryName(periodId, categoryId);
-    await ref
-        .read(transactionActionProvider.notifier)
-        .addExpense(
-          periodId: periodId,
-          categoryId: categoryId,
-          amount: amount,
-          title: title,
-          date: _date,
-        );
-
-    if (_saveAsTemplate || _saveAsRecurring) {
+    try {
       await ref
-          .read(transactionTemplateActionProvider.notifier)
-          .save(
-            type: TransactionType.expense,
+          .read(transactionActionProvider.notifier)
+          .addExpense(
+            periodId: periodId,
+            categoryId: categoryId,
             amount: amount,
             title: title,
-            preferredCategoryName: categoryName,
-            dayOfMonth: _saveAsRecurring ? _date.day : null,
+            date: _date,
+            recurringTemplateId: _recurringDraft?.template.id,
+            recurringDueDate: _recurringDraft?.dueDate,
           );
+
+      if (_saveAsTemplate || _saveAsRecurring) {
+        await ref
+            .read(transactionTemplateActionProvider.notifier)
+            .save(
+              type: TransactionType.expense,
+              amount: amount,
+              title: title,
+              preferredCategoryName: categoryName,
+              dayOfMonth: _saveAsRecurring ? _date.day : null,
+              activeFromDate: _date,
+            );
+      }
+    } on StateError catch (error) {
+      if (!mounted) return;
+      AppToast.show(context, context.tr(error.message.toString()));
+      return;
     }
 
     if (mounted) {
@@ -306,6 +330,16 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     for (final category in categories) {
       if (category.name.trim().toLowerCase() == normalizedName) {
         return category;
+      }
+    }
+    return null;
+  }
+
+  BudgetPeriod? _findPeriodForDate(List<BudgetPeriod> periods, DateTime? date) {
+    if (date == null) return null;
+    for (final period in periods) {
+      if (!date.isBefore(period.startDate) && !date.isAfter(period.endDate)) {
+        return period;
       }
     }
     return null;

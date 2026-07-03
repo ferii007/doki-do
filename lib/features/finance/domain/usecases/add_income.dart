@@ -10,12 +10,16 @@ class AddIncome {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) {
     return repository.addIncome(
       periodId: periodId,
       amount: amount,
       title: title,
       date: date,
+      recurringTemplateId: recurringTemplateId,
+      recurringDueDate: recurringDueDate,
     );
   }
 }

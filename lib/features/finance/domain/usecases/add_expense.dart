@@ -11,6 +11,8 @@ class AddExpense {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) {
     return repository.addExpense(
       periodId: periodId,
@@ -18,6 +20,8 @@ class AddExpense {
       amount: amount,
       title: title,
       date: date,
+      recurringTemplateId: recurringTemplateId,
+      recurringDueDate: recurringDueDate,
     );
   }
 }

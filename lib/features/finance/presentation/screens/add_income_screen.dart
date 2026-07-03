@@ -19,6 +19,8 @@ import '../widgets/transaction_form/transaction_date_picker.dart';
 import '../widgets/transaction_form/transaction_note_field.dart';
 import '../widgets/transaction_form/transaction_template_picker.dart';
 import '../widgets/transaction_form/transaction_template_save_options.dart';
+import '../../domain/entities/budget_period.dart';
+import '../../domain/entities/recurring_due_item.dart';
 import '../../domain/entities/transaction_template.dart';
 import '../../domain/entities/transaction_type.dart';
 
@@ -37,16 +39,28 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
   bool _saveAsTemplate = false;
   bool _saveAsRecurring = false;
   bool _routeTemplateApplied = false;
+  RecurringTransactionDraft? _recurringDraft;
 
   @override
   void didChangeDependencies() {
     super.didChangeDependencies();
     if (_routeTemplateApplied) return;
     final argument = ModalRoute.of(context)?.settings.arguments;
-    if (argument is TransactionTemplate &&
-        argument.type == TransactionType.income) {
-      _amountController.text = CurrencyInputFormatter.format(argument.amount);
-      _titleController.text = argument.title;
+    final template = switch (argument) {
+      RecurringTransactionDraft(:final template)
+          when template.type == TransactionType.income =>
+        template,
+      TransactionTemplate() when argument.type == TransactionType.income =>
+        argument,
+      _ => null,
+    };
+    if (template != null) {
+      if (argument is RecurringTransactionDraft) {
+        _recurringDraft = argument;
+        _date = argument.dueDate;
+      }
+      _amountController.text = CurrencyInputFormatter.format(template.amount);
+      _titleController.text = template.title;
       _routeTemplateApplied = true;
     }
   }
@@ -76,8 +90,9 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
           }
 
           _periodId ??=
+              _findPeriodForDate(periods, _recurringDraft?.dueDate)?.id ??
               selectedDashboardPeriodId ??
-              (periods.isEmpty ? null : periods.first.id);
+              periods.first.id;
           final selectedPeriod = periods.firstWhere(
             (period) => period.id == _periodId,
             orElse: () => periods.first,
@@ -185,24 +200,33 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
       return;
     }
 
-    await ref
-        .read(transactionActionProvider.notifier)
-        .addIncome(
-          periodId: periodId,
-          amount: amount,
-          title: title,
-          date: _date,
-        );
-
-    if (_saveAsTemplate || _saveAsRecurring) {
+    try {
       await ref
-          .read(transactionTemplateActionProvider.notifier)
-          .save(
-            type: TransactionType.income,
+          .read(transactionActionProvider.notifier)
+          .addIncome(
+            periodId: periodId,
             amount: amount,
             title: title,
-            dayOfMonth: _saveAsRecurring ? _date.day : null,
+            date: _date,
+            recurringTemplateId: _recurringDraft?.template.id,
+            recurringDueDate: _recurringDraft?.dueDate,
           );
+
+      if (_saveAsTemplate || _saveAsRecurring) {
+        await ref
+            .read(transactionTemplateActionProvider.notifier)
+            .save(
+              type: TransactionType.income,
+              amount: amount,
+              title: title,
+              dayOfMonth: _saveAsRecurring ? _date.day : null,
+              activeFromDate: _date,
+            );
+      }
+    } on StateError catch (error) {
+      if (!mounted) return;
+      AppToast.show(context, context.tr(error.message.toString()));
+      return;
     }
 
     if (mounted) {
@@ -215,6 +239,16 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
     if (value.isBefore(min)) return min;
     if (value.isAfter(max)) return max;
     return value;
+  }
+
+  BudgetPeriod? _findPeriodForDate(List<BudgetPeriod> periods, DateTime? date) {
+    if (date == null) return null;
+    for (final period in periods) {
+      if (!date.isBefore(period.startDate) && !date.isAfter(period.endDate)) {
+        return period;
+      }
+    }
+    return null;
   }
 }
 

@@ -9,6 +9,7 @@ import '../../domain/usecases/add_income.dart';
 import 'current_budget_provider.dart';
 import 'finance_repository_provider.dart';
 import 'selected_period_provider.dart';
+import 'transaction_template_provider.dart';
 
 final transactionActionProvider =
     NotifierProvider<TransactionActionNotifier, bool>(
@@ -24,17 +25,26 @@ class TransactionActionNotifier extends Notifier<bool> {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) async {
     state = true;
     try {
       final repository = ref.read(financeRepositoryProvider);
-      await AddIncome(
-        repository,
-      ).call(periodId: periodId, amount: amount, title: title, date: date);
+      await AddIncome(repository).call(
+        periodId: periodId,
+        amount: amount,
+        title: title,
+        date: date,
+        recurringTemplateId: recurringTemplateId,
+        recurringDueDate: recurringDueDate,
+      );
       ref.invalidate(currentBudgetProvider);
       ref.invalidate(budgetByPeriodProvider(periodId));
       ref.invalidate(budgetPeriodsProvider);
       ref.invalidate(allBudgetSnapshotsProvider);
+      ref.invalidate(recurringOccurrencesProvider);
+      ref.invalidate(recurringDueItemsProvider);
     } finally {
       state = false;
     }
@@ -69,6 +79,8 @@ class TransactionActionNotifier extends Notifier<bool> {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) async {
     state = true;
     try {
@@ -79,11 +91,15 @@ class TransactionActionNotifier extends Notifier<bool> {
         amount: amount,
         title: title,
         date: date,
+        recurringTemplateId: recurringTemplateId,
+        recurringDueDate: recurringDueDate,
       );
       ref.invalidate(currentBudgetProvider);
       ref.invalidate(budgetByPeriodProvider(periodId));
       ref.invalidate(budgetPeriodsProvider);
       ref.invalidate(allBudgetSnapshotsProvider);
+      ref.invalidate(recurringOccurrencesProvider);
+      ref.invalidate(recurringDueItemsProvider);
     } finally {
       state = false;
     }

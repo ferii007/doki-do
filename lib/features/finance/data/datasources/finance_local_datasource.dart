@@ -14,7 +14,7 @@ import '../../domain/entities/budget_allocation_draft.dart';
 import '../local/empty_finance_data.dart';
 
 class FinanceLocalDatasource {
-  static const _schemaVersion = 1;
+  static const _schemaVersion = 2;
   static const _storageFileName = 'doki_do_finance.json';
   static const _encryptionScope = 'finance';
 
@@ -63,6 +63,13 @@ class FinanceLocalDatasource {
         .toList();
   }
 
+  Future<List<Map<String, dynamic>>> getRecurringOccurrences() async {
+    final database = await _readDatabase();
+    return (database['recurring_occurrences'] as List)
+        .map((item) => item as Map<String, dynamic>)
+        .toList();
+  }
+
   Future<void> saveTransactionTemplate({
     String? templateId,
     required String type,
@@ -70,6 +77,12 @@ class FinanceLocalDatasource {
     required int amount,
     String? preferredCategoryName,
     int? dayOfMonth,
+    bool isActive = true,
+    DateTime? activeFromDate,
+    DateTime? endDate,
+    bool reminderEnabled = true,
+    int reminderHour = 9,
+    int reminderMinute = 0,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 200));
 
@@ -78,6 +91,7 @@ class FinanceLocalDatasource {
         .cast<Map<String, dynamic>>();
     final normalizedTitle = title.trim();
     final normalizedCategory = preferredCategoryName?.trim();
+    final now = DateTime.now();
     final template = {
       'transaction_template_id': templateId ?? _uuid.v4(),
       'title': normalizedTitle,
@@ -88,7 +102,13 @@ class FinanceLocalDatasource {
           ? null
           : normalizedCategory,
       'day_of_month': dayOfMonth,
-      'created_at': DateTime.now().toIso8601String(),
+      'is_active': isActive,
+      'active_from_date': (activeFromDate ?? now).toIso8601String(),
+      'end_date': endDate?.toIso8601String(),
+      'reminder_enabled': reminderEnabled,
+      'reminder_hour': reminderHour,
+      'reminder_minute': reminderMinute,
+      'created_at': now.toIso8601String(),
     };
 
     final index = templateId == null
@@ -100,6 +120,11 @@ class FinanceLocalDatasource {
       templates.add(template);
     } else {
       template['created_at'] = templates[index]['created_at'];
+      if (activeFromDate == null) {
+        template['active_from_date'] =
+            templates[index]['active_from_date'] ??
+            templates[index]['created_at'];
+      }
       templates[index] = template;
     }
     _sortTransactionTemplates(templates);
@@ -114,6 +139,44 @@ class FinanceLocalDatasource {
         .cast<Map<String, dynamic>>();
     templates.removeWhere(
       (item) => item['transaction_template_id'] == templateId,
+    );
+    (database['recurring_occurrences'] as List).removeWhere((item) {
+      return (item as Map<String, dynamic>)['template_id'] == templateId;
+    });
+    await _saveDatabase();
+  }
+
+  Future<void> setTransactionTemplateActive({
+    required String templateId,
+    required bool isActive,
+    required DateTime changedAt,
+  }) async {
+    final database = await _readDatabase();
+    final template = (database['transaction_templates'] as List)
+        .cast<Map<String, dynamic>>()
+        .firstWhere((item) => item['transaction_template_id'] == templateId);
+    template['is_active'] = isActive;
+    if (isActive) {
+      final existingStart = DateTime.parse(
+        template['active_from_date'] as String,
+      );
+      template['active_from_date'] =
+          (existingStart.isAfter(changedAt) ? existingStart : changedAt)
+              .toIso8601String();
+    }
+    await _saveDatabase();
+  }
+
+  Future<void> skipRecurringOccurrence({
+    required String templateId,
+    required DateTime dueDate,
+  }) async {
+    final database = await _readDatabase();
+    _recordRecurringOccurrence(
+      database,
+      templateId: templateId,
+      dueDate: dueDate,
+      status: 'skipped',
     );
     await _saveDatabase();
   }
@@ -251,14 +314,26 @@ class FinanceLocalDatasource {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
 
     final database = await _readDatabase();
     final data = _findPeriod(database, periodId);
 
+    final transactionId = _uuid.v4();
+    if (recurringTemplateId != null && recurringDueDate != null) {
+      _recordRecurringOccurrence(
+        database,
+        templateId: recurringTemplateId,
+        dueDate: recurringDueDate,
+        status: 'completed',
+        transactionId: transactionId,
+      );
+    }
     (data['transactions'] as List).add({
-      'transaction_id': _uuid.v4(),
+      'transaction_id': transactionId,
       'category_id': null,
       'title': title,
       'amount': amount,
@@ -296,14 +371,26 @@ class FinanceLocalDatasource {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 250));
 
     final database = await _readDatabase();
     final data = _findPeriod(database, periodId);
 
+    final transactionId = _uuid.v4();
+    if (recurringTemplateId != null && recurringDueDate != null) {
+      _recordRecurringOccurrence(
+        database,
+        templateId: recurringTemplateId,
+        dueDate: recurringDueDate,
+        status: 'completed',
+        transactionId: transactionId,
+      );
+    }
     (data['transactions'] as List).add({
-      'transaction_id': _uuid.v4(),
+      'transaction_id': transactionId,
       'category_id': categoryId,
       'title': title,
       'amount': amount,
@@ -619,6 +706,10 @@ class FinanceLocalDatasource {
         case 0:
           database['schema_version'] = 1;
           version = 1;
+        case 1:
+          database['recurring_occurrences'] ??= <Map<String, dynamic>>[];
+          database['schema_version'] = 2;
+          version = 2;
         default:
           throw FormatException(
             'No finance migration exists from schema version $version.',
@@ -724,6 +815,13 @@ class FinanceLocalDatasource {
                   item['preferred_category_name'],
                 ),
                 'day_of_month': item['day_of_month'],
+                'is_active': item['is_active'] as bool? ?? true,
+                'active_from_date':
+                    item['active_from_date'] ?? item['created_at'],
+                'end_date': item['end_date'],
+                'reminder_enabled': item['reminder_enabled'] as bool? ?? true,
+                'reminder_hour': item['reminder_hour'] as int? ?? 9,
+                'reminder_minute': item['reminder_minute'] as int? ?? 0,
                 'created_at': item['created_at'],
               };
             })
@@ -732,6 +830,16 @@ class FinanceLocalDatasource {
       (normalized['transaction_templates'] as List)
           .cast<Map<String, dynamic>>(),
     );
+    final templateIds = (normalized['transaction_templates'] as List)
+        .cast<Map<String, dynamic>>()
+        .map((item) => item['transaction_template_id'])
+        .whereType<String>()
+        .toSet();
+    normalized['recurring_occurrences'] =
+        (database['recurring_occurrences'] as List? ?? [])
+            .whereType<Map<String, dynamic>>()
+            .where((item) => templateIds.contains(item['template_id']))
+            .toList();
 
     final currentPeriodId = database['current_period_id'] as String?;
     final currentIdIsValid =
@@ -750,8 +858,10 @@ class FinanceLocalDatasource {
     }
     final periods = database['periods'];
     final templates = database['transaction_templates'];
+    final occurrences = database['recurring_occurrences'];
     if (periods is! List<Map<String, dynamic>> ||
-        templates is! List<Map<String, dynamic>>) {
+        templates is! List<Map<String, dynamic>> ||
+        occurrences is! List<Map<String, dynamic>>) {
       throw const FormatException('Finance collections are invalid.');
     }
 
@@ -858,6 +968,10 @@ class FinanceLocalDatasource {
     for (final template in templates) {
       final templateId = template['transaction_template_id'];
       final day = template['day_of_month'];
+      final activeFromDate = template['active_from_date'];
+      final endDate = template['end_date'];
+      final reminderHour = template['reminder_hour'];
+      final reminderMinute = template['reminder_minute'];
       if (templateId is! String ||
           templateId.isEmpty ||
           !templateIds.add(templateId) ||
@@ -867,8 +981,41 @@ class FinanceLocalDatasource {
           (template['type'] != 'income' && template['type'] != 'expense') ||
           template['created_at'] is! String ||
           DateTime.tryParse(template['created_at'] as String) == null ||
+          template['is_active'] is! bool ||
+          activeFromDate is! String ||
+          DateTime.tryParse(activeFromDate) == null ||
+          (endDate != null &&
+              (endDate is! String || DateTime.tryParse(endDate) == null)) ||
+          template['reminder_enabled'] is! bool ||
+          reminderHour is! int ||
+          reminderHour < 0 ||
+          reminderHour > 23 ||
+          reminderMinute is! int ||
+          reminderMinute < 0 ||
+          reminderMinute > 59 ||
           (day != null && (day is! int || day < 1 || day > 31))) {
         throw const FormatException('A transaction template is invalid.');
+      }
+    }
+
+    final occurrenceKeys = <String>{};
+    for (final occurrence in occurrences) {
+      final templateId = occurrence['template_id'];
+      final dueDate = occurrence['due_date'];
+      final status = occurrence['status'];
+      if (templateId is! String ||
+          !templateIds.contains(templateId) ||
+          dueDate is! String ||
+          DateTime.tryParse(dueDate) == null ||
+          (status != 'completed' && status != 'skipped') ||
+          occurrence['processed_at'] is! String ||
+          DateTime.tryParse(occurrence['processed_at'] as String) == null) {
+        throw const FormatException('A recurring occurrence is invalid.');
+      }
+      final parsedDueDate = DateTime.parse(dueDate);
+      final key = _recurringOccurrenceKey(templateId, parsedDueDate);
+      if (!occurrenceKeys.add(key)) {
+        throw const FormatException('A recurring occurrence is duplicated.');
       }
     }
   }
@@ -1125,6 +1272,51 @@ class FinanceLocalDatasource {
       'reason': reason,
       'date': date.toIso8601String(),
     });
+  }
+
+  void _recordRecurringOccurrence(
+    Map<String, dynamic> database, {
+    required String templateId,
+    required DateTime dueDate,
+    required String status,
+    String? transactionId,
+  }) {
+    final templates = (database['transaction_templates'] as List)
+        .cast<Map<String, dynamic>>();
+    if (!templates.any(
+      (template) => template['transaction_template_id'] == templateId,
+    )) {
+      throw StateError('error_recurring_template_not_found');
+    }
+    final occurrences = (database['recurring_occurrences'] as List)
+        .cast<Map<String, dynamic>>();
+    final key = _recurringOccurrenceKey(templateId, dueDate);
+    if (occurrences.any((item) {
+      return _recurringOccurrenceKey(
+            item['template_id'] as String,
+            DateTime.parse(item['due_date'] as String),
+          ) ==
+          key;
+    })) {
+      throw StateError('error_recurring_occurrence_already_processed');
+    }
+    final normalizedDueDate = DateTime(
+      dueDate.year,
+      dueDate.month,
+      dueDate.day,
+    );
+    occurrences.add({
+      'template_id': templateId,
+      'due_date': normalizedDueDate.toIso8601String(),
+      'status': status,
+      'processed_at': DateTime.now().toIso8601String(),
+      'transaction_id': transactionId,
+    });
+  }
+
+  String _recurringOccurrenceKey(String templateId, DateTime dueDate) {
+    final month = dueDate.month.toString().padLeft(2, '0');
+    return '${templateId}_${dueDate.year}_$month';
   }
 
   int _asInt(Object? value) {

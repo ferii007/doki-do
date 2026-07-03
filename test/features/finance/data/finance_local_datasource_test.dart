@@ -5,6 +5,7 @@ import 'package:doki_do/core/security/encrypted_storage.dart';
 import 'package:doki_do/core/storage/atomic_file_writer.dart';
 import 'package:doki_do/core/storage/resilient_encrypted_file_store.dart';
 import 'package:doki_do/features/finance/data/datasources/finance_local_datasource.dart';
+import 'package:doki_do/features/finance/domain/entities/budget_allocation_draft.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
 
@@ -87,8 +88,86 @@ void main() {
     final decrypted = await encryption.decrypt(migratedFile, scope: 'finance');
     final migratedJson =
         jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
-    expect(migratedJson['schema_version'], 1);
+    expect(migratedJson['schema_version'], 2);
+    expect(migratedJson['recurring_occurrences'], isEmpty);
   });
+
+  test(
+    'records a recurring occurrence once and rejects duplicate transactions',
+    () async {
+      final datasource = FinanceLocalDatasource(
+        encryptedStorage: EncryptedStorage(
+          keyStore: MemoryEncryptionKeyStore(),
+        ),
+      );
+      final period = await datasource.addBudgetPeriod(
+        startDate: DateTime(2026, 7),
+        endDate: DateTime(2026, 7, 31),
+        initialIncome: 1000000,
+        incomeSource: 'Saldo Awal',
+        defaultAllocations: const [
+          BudgetAllocationDraft(
+            name: 'Kebutuhan Harian',
+            percentage: 100,
+            amount: 1000000,
+          ),
+        ],
+        allocationsFollowIncome: false,
+      );
+      await datasource.saveTransactionTemplate(
+        type: 'expense',
+        title: 'Internet Rumah',
+        amount: 300000,
+        preferredCategoryName: 'Kebutuhan Harian',
+        dayOfMonth: 5,
+        activeFromDate: DateTime(2026, 7),
+      );
+
+      final template = (await datasource.getTransactionTemplates()).single;
+      final category =
+          (period['categories'] as List).single as Map<String, dynamic>;
+      final periodId = period['period_id'] as String;
+      final dueDate = DateTime(2026, 7, 5);
+
+      await datasource.addExpense(
+        periodId: periodId,
+        categoryId: category['category_id'] as String,
+        amount: 300000,
+        title: 'Internet Rumah',
+        date: dueDate,
+        recurringTemplateId: template['transaction_template_id'] as String,
+        recurringDueDate: dueDate,
+      );
+
+      final occurrences = await datasource.getRecurringOccurrences();
+      expect(occurrences, hasLength(1));
+      expect(occurrences.single['status'], 'completed');
+      expect(occurrences.single['transaction_id'], isNotNull);
+
+      await expectLater(
+        datasource.addExpense(
+          periodId: periodId,
+          categoryId: category['category_id'] as String,
+          amount: 300000,
+          title: 'Internet Rumah Duplikat',
+          date: dueDate,
+          recurringTemplateId: template['transaction_template_id'] as String,
+          recurringDueDate: dueDate,
+        ),
+        throwsA(
+          isA<StateError>().having(
+            (error) => error.message,
+            'message',
+            'error_recurring_occurrence_already_processed',
+          ),
+        ),
+      );
+
+      final stored = await datasource.getBudgetByPeriodId(periodId);
+      final storedPeriod = stored['data'] as Map<String, dynamic>;
+      expect(storedPeriod['transactions'], hasLength(2));
+    },
+  );
 
   test(
     'does not overwrite encrypted data when the key is unavailable',

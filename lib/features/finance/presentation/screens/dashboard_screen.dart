@@ -13,7 +13,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/budget_period.dart';
 import '../../domain/entities/budget_snapshot.dart';
 import '../../domain/entities/category_budget.dart';
-import '../../domain/entities/transaction_template.dart';
+import '../../domain/entities/recurring_due_item.dart';
 import '../../domain/entities/transaction_type.dart';
 import '../../../settings/presentation/providers/app_settings_provider.dart';
 import '../providers/current_budget_provider.dart';
@@ -1178,17 +1178,14 @@ class _RecurringDueSection extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final templatesAsync = ref.watch(transactionTemplatesProvider);
-    final today = DateTime.now().day;
+    final dueItemsAsync = ref.watch(recurringDueItemsProvider);
 
-    return templatesAsync.when(
+    return dueItemsAsync.when(
       loading: () => const SizedBox.shrink(),
       error: (_, _) => const SizedBox.shrink(),
-      data: (templates) {
-        final dueTemplates = templates
-            .where((template) => template.dayOfMonth == today)
-            .toList();
-        if (dueTemplates.isEmpty) return const SizedBox.shrink();
+      data: (items) {
+        if (items.isEmpty) return const SizedBox.shrink();
+        final hasOverdue = items.any((item) => item.isOverdue);
 
         return Padding(
           padding: const EdgeInsets.only(bottom: 28),
@@ -1196,17 +1193,21 @@ class _RecurringDueSection extends ConsumerWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                context.tr('needs_to_be_recorded_today'),
+                context.tr(
+                  hasOverdue
+                      ? 'transactions_waiting_to_be_recorded'
+                      : 'needs_to_be_recorded_today',
+                ),
                 style: Theme.of(context).textTheme.titleSmall?.copyWith(
                   color: AppColors.textPrimary,
                   fontWeight: FontWeight.w900,
                 ),
               ),
               const SizedBox(height: 10),
-              ...dueTemplates.map(
-                (template) => Padding(
+              ...items.map(
+                (item) => Padding(
                   padding: const EdgeInsets.only(bottom: 10),
-                  child: _RecurringDueCard(template: template),
+                  child: _RecurringDueCard(item: item),
                 ),
               ),
             ],
@@ -1217,13 +1218,14 @@ class _RecurringDueSection extends ConsumerWidget {
   }
 }
 
-class _RecurringDueCard extends StatelessWidget {
-  final TransactionTemplate template;
+class _RecurringDueCard extends ConsumerWidget {
+  final RecurringDueItem item;
 
-  const _RecurringDueCard({required this.template});
+  const _RecurringDueCard({required this.item});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final template = item.template;
     final color = template.type == TransactionType.income
         ? AppColors.secondary
         : AppColors.danger;
@@ -1233,7 +1235,14 @@ class _RecurringDueCard extends StatelessWidget {
 
     return InkWell(
       borderRadius: BorderRadius.circular(18),
-      onTap: () => Navigator.pushNamed(context, route, arguments: template),
+      onTap: () => Navigator.pushNamed(
+        context,
+        route,
+        arguments: RecurringTransactionDraft(
+          template: template,
+          dueDate: item.dueDate,
+        ),
+      ),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
@@ -1270,10 +1279,16 @@ class _RecurringDueCard extends StatelessWidget {
                   ),
                   const SizedBox(height: 3),
                   Text(
-                    template.preferredCategoryName ??
-                        (template.type == TransactionType.income
-                            ? context.tr('income')
-                            : context.tr('expense')),
+                    [
+                      item.isOverdue
+                          ? context.tr('overdue')
+                          : context.tr('due_today'),
+                      DateFormatter.full(item.dueDate),
+                      template.preferredCategoryName ??
+                          (template.type == TransactionType.income
+                              ? context.tr('income')
+                              : context.tr('expense')),
+                    ].join(' • '),
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1285,17 +1300,46 @@ class _RecurringDueCard extends StatelessWidget {
               ),
             ),
             const SizedBox(width: 10),
-            Text(
-              RupiahFormatter.format(template.amount),
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: color,
-                fontWeight: FontWeight.w900,
-              ),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.end,
+              children: [
+                Text(
+                  RupiahFormatter.format(template.amount),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: color,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+                const SizedBox(height: 5),
+                GestureDetector(
+                  onTap: () => _skip(context, ref),
+                  child: Text(
+                    context.tr('skip_this_time'),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
       ),
     );
+  }
+
+  Future<void> _skip(BuildContext context, WidgetRef ref) async {
+    try {
+      await ref
+          .read(transactionTemplateActionProvider.notifier)
+          .skip(templateId: item.template.id, dueDate: item.dueDate);
+      if (!context.mounted) return;
+      AppToast.show(context, context.tr('recurring_occurrence_skipped'));
+    } on StateError catch (error) {
+      if (!context.mounted) return;
+      AppToast.show(context, context.tr(error.message.toString()));
+    }
   }
 }
 

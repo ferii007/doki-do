@@ -2,6 +2,7 @@ import '../../domain/entities/budget_period.dart';
 import '../../domain/entities/budget_allocation_draft.dart';
 import '../../domain/entities/budget_snapshot.dart';
 import '../../domain/entities/transaction_template.dart';
+import '../../domain/entities/recurring_occurrence.dart';
 import '../../domain/repositories/finance_repository.dart';
 import '../datasources/finance_local_datasource.dart';
 
@@ -36,6 +37,12 @@ class FinanceRepositoryImpl implements FinanceRepository {
   }
 
   @override
+  Future<List<RecurringOccurrence>> getRecurringOccurrences() async {
+    final json = await datasource.getRecurringOccurrences();
+    return json.map(RecurringOccurrence.fromJson).toList();
+  }
+
+  @override
   Future<void> saveTransactionTemplate({
     String? templateId,
     required String type,
@@ -43,6 +50,12 @@ class FinanceRepositoryImpl implements FinanceRepository {
     required int amount,
     String? preferredCategoryName,
     int? dayOfMonth,
+    bool isActive = true,
+    DateTime? activeFromDate,
+    DateTime? endDate,
+    bool reminderEnabled = true,
+    int reminderHour = 9,
+    int reminderMinute = 0,
   }) {
     return datasource.saveTransactionTemplate(
       templateId: templateId,
@@ -51,12 +64,42 @@ class FinanceRepositoryImpl implements FinanceRepository {
       amount: amount,
       preferredCategoryName: preferredCategoryName,
       dayOfMonth: dayOfMonth,
+      isActive: isActive,
+      activeFromDate: activeFromDate,
+      endDate: endDate,
+      reminderEnabled: reminderEnabled,
+      reminderHour: reminderHour,
+      reminderMinute: reminderMinute,
     );
   }
 
   @override
   Future<void> deleteTransactionTemplate(String templateId) {
     return datasource.deleteTransactionTemplate(templateId);
+  }
+
+  @override
+  Future<void> setTransactionTemplateActive({
+    required String templateId,
+    required bool isActive,
+    required DateTime changedAt,
+  }) {
+    return datasource.setTransactionTemplateActive(
+      templateId: templateId,
+      isActive: isActive,
+      changedAt: changedAt,
+    );
+  }
+
+  @override
+  Future<void> skipRecurringOccurrence({
+    required String templateId,
+    required DateTime dueDate,
+  }) {
+    return datasource.skipRecurringOccurrence(
+      templateId: templateId,
+      dueDate: dueDate,
+    );
   }
 
   @override
@@ -87,12 +130,16 @@ class FinanceRepositoryImpl implements FinanceRepository {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) {
     return datasource.addIncome(
       periodId: periodId,
       amount: amount,
       title: title,
       date: date,
+      recurringTemplateId: recurringTemplateId,
+      recurringDueDate: recurringDueDate,
     );
   }
 
@@ -120,6 +167,8 @@ class FinanceRepositoryImpl implements FinanceRepository {
     required int amount,
     required String title,
     required DateTime date,
+    String? recurringTemplateId,
+    DateTime? recurringDueDate,
   }) {
     return datasource.addExpense(
       periodId: periodId,
@@ -127,6 +176,8 @@ class FinanceRepositoryImpl implements FinanceRepository {
       amount: amount,
       title: title,
       date: date,
+      recurringTemplateId: recurringTemplateId,
+      recurringDueDate: recurringDueDate,
     );
   }
 
