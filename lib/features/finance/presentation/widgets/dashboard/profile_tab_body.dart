@@ -6,6 +6,8 @@ import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/app_info/app_version_provider.dart';
 import '../../../../../core/localization/app_localizations.dart';
 import '../../../../../core/widgets/amount_text.dart';
+import '../../../../../core/widgets/app_inline_divider.dart';
+import '../../../../../core/widgets/app_toast.dart';
 import '../../../../../core/widgets/loading_view.dart';
 import '../../../../settings/presentation/providers/app_settings_provider.dart';
 import '../../../domain/entities/budget_snapshot.dart';
@@ -38,10 +40,6 @@ class ProfileTabBody extends ConsumerWidget {
             (total, snapshot) => total + snapshot.totalExpense,
           );
           final activeBudgetCount = currentSnapshot?.categories.length ?? 0;
-          final remaining = currentSnapshot == null
-              ? 0
-              : currentSnapshot!.period.totalIncome -
-                    currentSnapshot!.totalExpense;
 
           return Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -57,7 +55,7 @@ class ProfileTabBody extends ConsumerWidget {
                 totalExpense: totalExpense,
               ),
               const SizedBox(height: 16),
-              _ProfileStatusCard(remaining: remaining),
+              const _ProfileDataActionsCard(),
               const SizedBox(height: 16),
               _ProfileMenuCard(
                 children: [
@@ -278,9 +276,9 @@ class _ProfileSummaryGrid extends StatelessWidget {
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
-        crossAxisSpacing: 12,
-        mainAxisSpacing: 12,
-        childAspectRatio: 1.28,
+        crossAxisSpacing: 10,
+        mainAxisSpacing: 10,
+        childAspectRatio: 1.48,
       ),
       children: [
         _ProfileMetricCard(
@@ -328,43 +326,40 @@ class _ProfileMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
-        boxShadow: [
-          BoxShadow(
-            color: tint.withValues(alpha: 0.1),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.82)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _MetricIcon(icon: icon, tint: tint),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              Text(
-                value,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
+              _MetricIcon(icon: icon, tint: tint),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                  ),
                 ),
               ),
             ],
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+              color: AppColors.textPrimary,
+              fontWeight: FontWeight.w900,
+            ),
           ),
         ],
       ),
@@ -388,44 +383,48 @@ class _ProfileAmountMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(14),
+      padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         color: AppColors.surface,
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.72)),
-        boxShadow: [
-          BoxShadow(
-            color: tint.withValues(alpha: 0.1),
-            blurRadius: 18,
-            offset: const Offset(0, 10),
-          ),
-        ],
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.82)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          leading,
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+          Row(
             children: [
-              AmountText(
-                amount: amount,
-                highlightNegative: false,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w900,
-                ),
-              ),
-              const SizedBox(height: 2),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                  color: AppColors.textSecondary,
-                  fontWeight: FontWeight.w700,
+              leading,
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: AppColors.textSecondary,
+                    fontWeight: FontWeight.w700,
+                    height: 1.1,
+                  ),
                 ),
               ),
             ],
+          ),
+          const Spacer(),
+          SizedBox(
+            width: double.infinity,
+            child: FittedBox(
+              fit: BoxFit.scaleDown,
+              alignment: Alignment.centerLeft,
+              child: AmountText(
+                amount: amount,
+                highlightNegative: false,
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: tint,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
           ),
         ],
       ),
@@ -433,77 +432,92 @@ class _ProfileAmountMetricCard extends StatelessWidget {
   }
 }
 
-class _ProfileStatusCard extends StatelessWidget {
-  final int remaining;
-
-  const _ProfileStatusCard({required this.remaining});
+class _ProfileDataActionsCard extends StatelessWidget {
+  const _ProfileDataActionsCard();
 
   @override
   Widget build(BuildContext context) {
-    final isHealthy = remaining >= 0;
-
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 12),
       decoration: BoxDecoration(
-        color: isHealthy
-            ? AppColors.primary.withValues(alpha: 0.09)
-            : AppColors.danger.withValues(alpha: 0.09),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(
-          color: (isHealthy ? AppColors.primary : AppColors.danger).withValues(
-            alpha: 0.16,
-          ),
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: AppColors.overlay.withValues(alpha: 0.04),
-            blurRadius: 18,
-            offset: const Offset(0, 9),
-          ),
-        ],
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.82)),
       ),
       child: Row(
         children: [
-          Container(
-            width: 42,
-            height: 42,
-            decoration: BoxDecoration(
-              color: Colors.white,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(
-              isHealthy ? Icons.verified_rounded : Icons.warning_amber_rounded,
-              color: isHealthy ? AppColors.primary : AppColors.danger,
+          Expanded(
+            child: _ProfileDataAction(
+              icon: Icons.file_download_outlined,
+              label: context.tr('export_report'),
+              onTap: () => _showUnavailableToast(context),
             ),
           ),
-          const SizedBox(width: 12),
+          const AppInlineDivider(height: 42, horizontalMargin: 6),
           Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isHealthy
-                      ? context.tr('this_period_is_still_on_track')
-                      : context.tr('this_period_needs_attention'),
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                    color: AppColors.textPrimary,
-                    fontWeight: FontWeight.w900,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                AmountText(
-                  amount: remaining,
-                  highlightNegative: false,
-                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w800,
-                  ),
-                ),
-              ],
+            child: _ProfileDataAction(
+              icon: Icons.file_upload_outlined,
+              label: context.tr('import_data'),
+              onTap: () => _showUnavailableToast(context),
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showUnavailableToast(BuildContext context) {
+    AppToast.show(context, context.tr('feature_not_available_yet'));
+  }
+}
+
+class _ProfileDataAction extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  final VoidCallback onTap;
+
+  const _ProfileDataAction({
+    required this.icon,
+    required this.label,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+      borderRadius: BorderRadius.circular(14),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.mintSurface,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: AppColors.primary, size: 20),
+            ),
+            const SizedBox(width: 9),
+            Flexible(
+              child: Text(
+                label,
+                maxLines: 2,
+                textAlign: TextAlign.left,
+                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: AppColors.textPrimary,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

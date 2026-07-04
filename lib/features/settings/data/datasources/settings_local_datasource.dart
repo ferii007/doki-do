@@ -11,7 +11,7 @@ import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_settings.dart';
 
 class SettingsLocalDatasource {
-  static const _schemaVersion = 4;
+  static const _schemaVersion = 5;
   static const _storageFileName = 'doki_do_settings.json';
   static const _encryptionScope = 'settings';
 
@@ -92,6 +92,10 @@ class SettingsLocalDatasource {
           settings['backup_frequency'] ??= 'off';
           settings['schema_version'] = 4;
           version = 4;
+        case 4:
+          settings['export_report_template'] ??= 'dashboard';
+          settings['schema_version'] = 5;
+          version = 5;
         default:
           throw FormatException(
             'No settings migration exists from schema version $version.',
@@ -116,6 +120,7 @@ class SettingsLocalDatasource {
       'language_code': settings.languageCode,
       'currency_code': settings.currencyCode,
       'hide_financial_amounts': settings.hideFinancialAmounts,
+      'export_report_template': settings.exportReportTemplateCode,
     };
   }
 
@@ -136,6 +141,9 @@ class SettingsLocalDatasource {
       hideFinancialAmounts:
           backupData['hide_financial_amounts'] as bool? ??
           current.hideFinancialAmounts,
+      exportReportTemplateCode:
+          backupData['export_report_template'] as String? ??
+          current.exportReportTemplateCode,
     );
     await saveSettings(restored);
     return restored;

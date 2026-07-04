@@ -3,6 +3,7 @@ import 'app_lock_timeout.dart';
 import 'backup_frequency.dart';
 import 'app_currency.dart';
 import 'app_language.dart';
+import 'export_report_template.dart';
 
 class AppSettings {
   final bool hasCompletedSetup;
@@ -21,6 +22,7 @@ class AppSettings {
   final String? backupFolderName;
   final String backupFrequencyCode;
   final String? lastBackupAt;
+  final String exportReportTemplateCode;
 
   const AppSettings({
     required this.hasCompletedSetup,
@@ -39,6 +41,7 @@ class AppSettings {
     required this.backupFolderName,
     required this.backupFrequencyCode,
     required this.lastBackupAt,
+    required this.exportReportTemplateCode,
   });
 
   factory AppSettings.defaults() {
@@ -59,6 +62,7 @@ class AppSettings {
       backupFolderName: null,
       backupFrequencyCode: 'off',
       lastBackupAt: null,
+      exportReportTemplateCode: 'dashboard',
     );
   }
 
@@ -93,6 +97,10 @@ class AppSettings {
       backupFrequencyCode:
           json['backup_frequency'] as String? ?? defaults.backupFrequencyCode,
       lastBackupAt: json['last_backup_at'] as String?,
+      exportReportTemplateCode: ExportReportTemplate.byCode(
+        json['export_report_template'] as String? ??
+            defaults.exportReportTemplateCode,
+      ).code,
     );
   }
 
@@ -115,6 +123,7 @@ class AppSettings {
       'backup_folder_name': backupFolderName,
       'backup_frequency': backupFrequencyCode,
       'last_backup_at': lastBackupAt,
+      'export_report_template': exportReportTemplateCode,
     };
   }
 
@@ -127,6 +136,8 @@ class AppSettings {
       BackupFrequency.byCode(backupFrequencyCode);
   DateTime? get lastBackupDateTime =>
       lastBackupAt == null ? null : DateTime.tryParse(lastBackupAt!);
+  ExportReportTemplate get exportReportTemplate =>
+      ExportReportTemplate.byCode(exportReportTemplateCode);
 
   AppSettings copyWith({
     bool? hasCompletedSetup,
@@ -148,6 +159,7 @@ class AppSettings {
     String? backupFrequencyCode,
     String? lastBackupAt,
     bool clearLastBackupAt = false,
+    String? exportReportTemplateCode,
   }) {
     return AppSettings(
       hasCompletedSetup: hasCompletedSetup ?? this.hasCompletedSetup,
@@ -175,6 +187,8 @@ class AppSettings {
       lastBackupAt: clearLastBackupAt
           ? null
           : lastBackupAt ?? this.lastBackupAt,
+      exportReportTemplateCode:
+          exportReportTemplateCode ?? this.exportReportTemplateCode,
     );
   }
 }

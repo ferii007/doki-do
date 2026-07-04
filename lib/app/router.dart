@@ -12,6 +12,7 @@ import '../features/finance/presentation/screens/transaction_templates_screen.da
 import '../features/notifications/presentation/screens/notification_center_screen.dart';
 import '../features/security/presentation/screens/app_lock_settings_screen.dart';
 import '../features/settings/presentation/screens/general_info_screen.dart';
+import '../features/settings/presentation/screens/export_report_templates_screen.dart';
 import '../features/settings/presentation/screens/settings_screen.dart';
 
 class AppRouter {
@@ -31,6 +32,7 @@ class AppRouter {
   static const termsAndConditions = '/terms-and-conditions';
   static const privacyPolicy = '/privacy-policy';
   static const notifications = '/notifications';
+  static const exportReportTemplates = '/export-report-templates';
 
   static Map<String, WidgetBuilder> get routes => {
     addIncome: (_) => const AddIncomeScreen(),
@@ -54,5 +56,6 @@ class AppRouter {
       contentKey: 'privacy_policy_content',
     ),
     notifications: (_) => const NotificationCenterScreen(),
+    exportReportTemplates: (_) => const ExportReportTemplatesScreen(),
   };
 }

@@ -76,10 +76,19 @@ class SettingsTabBody extends ConsumerWidget {
                 icon: Icons.event_repeat_rounded,
                 label: context.tr('transaction_templates'),
                 value: context.tr('transaction_templates_settings_value'),
-                showDivider: false,
                 onTap: () => Navigator.pushNamed(
                   context,
                   AppRouter.transactionTemplates,
+                ),
+              ),
+              _SettingsOptionRow(
+                icon: Icons.dashboard_customize_outlined,
+                label: context.tr('export_template'),
+                value: context.tr(value.exportReportTemplate.nameKey),
+                showDivider: false,
+                onTap: () => Navigator.pushNamed(
+                  context,
+                  AppRouter.exportReportTemplates,
                 ),
               ),
             ],

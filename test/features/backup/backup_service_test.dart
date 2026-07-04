@@ -63,7 +63,10 @@ void main() {
   test('restore replaces user data but preserves App Lock settings', () async {
     final initial = await settingsDatasource.readSettings();
     await settingsDatasource.saveSettings(
-      initial.copyWith(displayName: 'Nama Dari Backup'),
+      initial.copyWith(
+        displayName: 'Nama Dari Backup',
+        exportReportTemplateCode: 'basic',
+      ),
     );
     const notificationId = 'backup-notification';
     await notificationDatasource.upsert(
@@ -83,6 +86,7 @@ void main() {
         displayName: 'Nama Saat Ini',
         appLockEnabled: true,
         biometricUnlockEnabled: true,
+        exportReportTemplateCode: 'dashboard',
       ),
     );
     await notificationDatasource.delete(notificationId);
@@ -95,6 +99,7 @@ void main() {
     expect(restored.displayName, 'Nama Dari Backup');
     expect(restored.appLockEnabled, isTrue);
     expect(restored.biometricUnlockEnabled, isTrue);
+    expect(restored.exportReportTemplateCode, 'basic');
     expect((await notificationDatasource.getAll()).single.id, notificationId);
   });
 

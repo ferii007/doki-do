@@ -86,12 +86,13 @@ void main() {
       );
       final migratedJson =
           jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
-      expect(migratedJson['schema_version'], 4);
+      expect(migratedJson['schema_version'], 5);
       expect(migratedJson['notification_permission_prompt_dismissed'], isFalse);
       expect(migratedJson['app_lock_enabled'], isFalse);
       expect(migratedJson['biometric_unlock_enabled'], isFalse);
       expect(migratedJson['app_lock_timeout'], 'immediately');
       expect(migratedJson['backup_frequency'], 'off');
+      expect(migratedJson['export_report_template'], 'dashboard');
     },
   );
 
@@ -158,6 +159,25 @@ void main() {
     expect(reloaded.backupFolderName, 'DokiDo Backup');
     expect(reloaded.backupFrequencyCode, 'weekly');
     expect(reloaded.lastBackupAt, '2026-07-02T10:00:00.000');
+  });
+
+  test('persists the selected export report template', () async {
+    final keyStore = MemoryEncryptionKeyStore();
+    final writer = SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    );
+    final settings = await writer.readSettings();
+    expect(settings.exportReportTemplateCode, 'dashboard');
+
+    await writer.saveSettings(
+      settings.copyWith(exportReportTemplateCode: 'basic'),
+    );
+
+    final reloaded = await SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    ).readSettings();
+
+    expect(reloaded.exportReportTemplateCode, 'basic');
   });
 }
 
