@@ -21,10 +21,13 @@ class RecurringNotificationService {
   final FlutterLocalNotificationsPlugin _plugin;
   final _payloadController =
       StreamController<RecurringNotificationPayload>.broadcast();
+  final _inboxPayloadController =
+      StreamController<InboxNotificationPayload>.broadcast();
   bool _initialized = false;
   bool _launchPayloadRead = false;
   Future<void>? _initialization;
   RecurringNotificationPayload? _pendingPayload;
+  InboxNotificationPayload? _pendingInboxPayload;
 
   RecurringNotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
@@ -83,10 +86,18 @@ class RecurringNotificationService {
 
   Stream<RecurringNotificationPayload> get payloads =>
       _payloadController.stream;
+  Stream<InboxNotificationPayload> get inboxPayloads =>
+      _inboxPayloadController.stream;
 
   RecurringNotificationPayload? takePendingPayload() {
     final payload = _pendingPayload;
     _pendingPayload = null;
+    return payload;
+  }
+
+  InboxNotificationPayload? takePendingInboxPayload() {
+    final payload = _pendingInboxPayload;
+    _pendingInboxPayload = null;
     return payload;
   }
 
@@ -206,8 +217,41 @@ class RecurringNotificationService {
     await _plugin.cancel(_notificationId(templateId, dueDate));
   }
 
+  Future<void> showInboxNotification({
+    required String notificationId,
+    required String title,
+    required String body,
+    required AppLanguage language,
+  }) async {
+    await initialize();
+    if (kIsWeb || !await areNotificationsEnabled()) return;
+    final localizations = AppLocalizations(language);
+    await _plugin.show(
+      _stableNotificationId('inbox:$notificationId'),
+      title,
+      body,
+      NotificationDetails(
+        android: AndroidNotificationDetails(
+          'financial_alerts',
+          localizations.tr('financial_alert_notification_channel'),
+          channelDescription: localizations.tr(
+            'financial_alert_notification_channel_description',
+          ),
+          importance: Importance.high,
+          priority: Priority.high,
+        ),
+        iOS: const DarwinNotificationDetails(),
+      ),
+      payload: 'inbox:$notificationId',
+    );
+  }
+
   int _notificationId(String templateId, DateTime dueDate) {
     final value = '$templateId:${dueDate.year}:${dueDate.month}';
+    return _stableNotificationId(value);
+  }
+
+  int _stableNotificationId(String value) {
     var hash = 0x811c9dc5;
     for (final codeUnit in value.codeUnits) {
       hash ^= codeUnit;
@@ -217,6 +261,15 @@ class RecurringNotificationService {
   }
 
   void _publishPayload(String? rawPayload) {
+    final inboxPayload = InboxNotificationPayload.tryParse(rawPayload);
+    if (inboxPayload != null) {
+      if (_inboxPayloadController.hasListener) {
+        _inboxPayloadController.add(inboxPayload);
+      } else {
+        _pendingInboxPayload = inboxPayload;
+      }
+      return;
+    }
     final payload = RecurringNotificationPayload.tryParse(rawPayload);
     if (payload == null) return;
     if (_payloadController.hasListener) {
@@ -224,6 +277,20 @@ class RecurringNotificationService {
     } else {
       _pendingPayload = payload;
     }
+  }
+}
+
+class InboxNotificationPayload {
+  final String notificationId;
+
+  const InboxNotificationPayload({required this.notificationId});
+
+  static InboxNotificationPayload? tryParse(String? rawPayload) {
+    const prefix = 'inbox:';
+    if (rawPayload == null || !rawPayload.startsWith(prefix)) return null;
+    final id = rawPayload.substring(prefix.length);
+    if (id.isEmpty) return null;
+    return InboxNotificationPayload(notificationId: id);
   }
 }
 

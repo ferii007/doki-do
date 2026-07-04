@@ -7,14 +7,15 @@ enum AppCurrency {
     symbol: 'Rp ',
     locale: 'id_ID',
     decimalDigits: 0,
-  ),
-  usd(
-    code: 'USD',
-    labelKey: 'currency_usd',
-    symbol: r'$',
-    locale: 'en_US',
-    decimalDigits: 2,
   );
+  // USD dinonaktifkan sementara sampai dukungan multi-currency siap.
+  // usd(
+  //   code: 'USD',
+  //   labelKey: 'currency_usd',
+  //   symbol: r'$',
+  //   locale: 'en_US',
+  //   decimalDigits: 2,
+  // );
 
   final String code;
   final String labelKey;

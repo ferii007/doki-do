@@ -28,4 +28,20 @@ void main() {
       );
     });
   });
+
+  group('InboxNotificationPayload', () {
+    test('parses a valid inbox notification payload', () {
+      final payload = InboxNotificationPayload.tryParse(
+        'inbox:budget:period-1:category-1:80',
+      );
+
+      expect(payload, isNotNull);
+      expect(payload!.notificationId, 'budget:period-1:category-1:80');
+    });
+
+    test('rejects an empty or unrelated payload', () {
+      expect(InboxNotificationPayload.tryParse('inbox:'), isNull);
+      expect(InboxNotificationPayload.tryParse('recurring:test'), isNull);
+    });
+  });
 }

@@ -245,7 +245,6 @@ const _id = <String, String>{
   'choose_language': 'Pilih Bahasa',
   'choose_currency': 'Pilih Mata Uang',
   'settings_updated_successfully': 'Pengaturan berhasil diperbarui.',
-  'powered_by_feri': 'Powered by Feri',
   'transaction_templates': 'Template Transaksi',
   'transaction_templates_settings_value': 'Template Cepat Dan Berulang',
   'quick_templates': 'Template Cepat',
@@ -825,6 +824,63 @@ const _id = <String, String>{
   'restore_replaces_current_data_warning':
       'Seluruh data keuangan saat ini akan diganti. PIN dan pengaturan App Lock tetap dipertahankan.',
   'backup_restored_successfully': 'Data DokiDo berhasil dipulihkan.',
+  'change_display_name': 'Ubah Nama Yang Ditampilkan',
+  'display_name_hint': 'Masukkan nama yang ingin ditampilkan',
+  'display_name_required': 'Nama yang ditampilkan wajib diisi.',
+  'general_info': 'Informasi Umum',
+  'terms_and_conditions': 'Syarat & Ketentuan',
+  'privacy_policy': 'Kebijakan Privasi',
+  'version': 'Versi',
+  'powered_by_niskala': 'Powered by Niskala.dev',
+  'terms_and_conditions_content':
+      'Terakhir diperbarui: Juli 2026\n\n'
+      'DokiDo adalah aplikasi pencatatan keuangan pribadi yang bekerja secara lokal di perangkat. Dengan menggunakan DokiDo, pengguna bertanggung jawab atas kebenaran data yang dicatat dan keputusan keuangan yang dibuat berdasarkan data tersebut.\n\n'
+      'DokiDo tidak menyediakan layanan perbankan, investasi, perpajakan, atau nasihat keuangan profesional. Perhitungan aplikasi membantu pencatatan dan perencanaan, tetapi tetap perlu diperiksa oleh pengguna.\n\n'
+      'Pengguna bertanggung jawab menjaga perangkat, PIN aplikasi, kata sandi backup, dan file backup. File backup yang kata sandinya terlupa tidak dapat dipulihkan.\n\n'
+      'Fitur dan struktur data dapat berubah selama masa beta. Niskala.dev berupaya menjaga keandalan aplikasi, tetapi pengguna tetap disarankan membuat backup berkala.',
+  'privacy_policy_content':
+      'Terakhir diperbarui: Juli 2026\n\n'
+      'DokiDo dirancang sebagai aplikasi offline. Data keuangan utama disimpan secara terenkripsi di perangkat dan tidak dikirim ke server DokiDo.\n\n'
+      'Izin notifikasi digunakan untuk pengingat transaksi dan peringatan keuangan yang dipilih. Akses folder backup diberikan melalui pemilih folder Android dan hanya berlaku untuk folder yang disetujui pengguna.\n\n'
+      'File backup dienkripsi dengan kata sandi backup. Jika pengguna menyimpan file ke layanan cloud atau membagikannya, pengelolaan file tersebut mengikuti kebijakan layanan tujuan.\n\n'
+      'DokiDo tidak mengakses data biometrik mentah. Verifikasi biometrik dilakukan oleh sistem operasi perangkat.',
+  'notifications': 'Notifikasi',
+  'mark_all_as_read': 'Tandai Semua Dibaca',
+  'unread': 'Belum Dibaca',
+  'notifications_could_not_be_loaded': 'Notifikasi belum dapat dimuat.',
+  'no_notifications_yet': 'Belum ada notifikasi.',
+  'no_unread_notifications': 'Semua notifikasi sudah dibaca.',
+  'delete_notification': 'Hapus Notifikasi?',
+  'delete_notification_description': 'Notifikasi ini akan dihapus dari DokiDo.',
+  'record_now': 'Catat Sekarang',
+  'view_budget': 'Lihat Anggaran',
+  'fix': 'Perbaiki',
+  'view_period': 'Lihat Periode',
+  'notification_recurring_title': '{title} Perlu Dicatat',
+  'notification_recurring_body': '{amount} dijadwalkan pada {date}.',
+  'notification_recurring_category_body':
+      '{amount} dijadwalkan pada {date} dari {category}.',
+  'notification_budget_warning_title': 'Anggaran Hampir Habis',
+  'notification_budget_warning_body': '{category} sudah terpakai {percent}%.',
+  'notification_budget_exceeded_title': 'Anggaran Terlampaui',
+  'notification_budget_exceeded_body':
+      '{category} sudah mencapai {percent}% dari batas anggaran.',
+  'notification_backup_failed_title': 'Backup Otomatis Gagal',
+  'notification_backup_failed_body':
+      'Folder backup tidak dapat diakses. Pilih ulang lokasi backup.',
+  'notification_period_ending_title': 'Periode Segera Berakhir',
+  'notification_period_ending_today_body':
+      'Periode {period} berakhir hari ini.',
+  'notification_period_ending_one_day_body':
+      'Periode {period} berakhir dalam 1 hari.',
+  'notification_period_ending_many_days_body':
+      'Periode {period} berakhir dalam {days} hari.',
+  'financial_alert_notification_channel': 'Peringatan Keuangan',
+  'financial_alert_notification_channel_description':
+      'Peringatan anggaran, periode, dan backup DokiDo.',
+  'private_notification_title': 'Pemberitahuan DokiDo',
+  'private_notification_body':
+      'Buka DokiDo untuk melihat pemberitahuan terbaru.',
 };
 
 const _en = <String, String>{
@@ -994,7 +1050,6 @@ const _en = <String, String>{
   'choose_language': 'Choose Language',
   'choose_currency': 'Choose Currency',
   'settings_updated_successfully': 'Settings updated successfully.',
-  'powered_by_feri': 'Powered by Feri',
   'transaction_templates': 'Transaction Templates',
   'transaction_templates_settings_value': 'Quick And Recurring Templates',
   'quick_templates': 'Quick Templates',
@@ -1572,4 +1627,60 @@ const _en = <String, String>{
   'restore_replaces_current_data_warning':
       'All current financial data will be replaced. Your PIN and App Lock settings will be preserved.',
   'backup_restored_successfully': 'DokiDo data was restored successfully.',
+  'change_display_name': 'Change Display Name',
+  'display_name_hint': 'Enter the name you want to display',
+  'display_name_required': 'A display name is required.',
+  'general_info': 'General Information',
+  'terms_and_conditions': 'Terms & Conditions',
+  'privacy_policy': 'Privacy Policy',
+  'version': 'Version',
+  'powered_by_niskala': 'Powered by Niskala.dev',
+  'terms_and_conditions_content':
+      'Last updated: July 2026\n\n'
+      'DokiDo is a personal finance tracking application that works locally on the device. By using DokiDo, users remain responsible for the accuracy of recorded data and financial decisions based on that data.\n\n'
+      'DokiDo does not provide banking, investment, tax, or professional financial advisory services. Application calculations assist with tracking and planning but should still be reviewed by the user.\n\n'
+      'Users are responsible for protecting their device, application PIN, backup password, and backup files. A backup cannot be restored if its password is forgotten.\n\n'
+      'Features and data structures may change during beta. Niskala.dev works to maintain application reliability, but users should still create backups regularly.',
+  'privacy_policy_content':
+      'Last updated: July 2026\n\n'
+      'DokiDo is designed as an offline application. Primary financial data is stored encrypted on the device and is not sent to DokiDo servers.\n\n'
+      'Notification permission is used for selected transaction reminders and financial alerts. Backup folder access is granted through the Android folder picker and only applies to the folder approved by the user.\n\n'
+      'Backup files are encrypted with the backup password. If users save files to a cloud service or share them, those files are governed by the destination service policies.\n\n'
+      'DokiDo does not access raw biometric data. Biometric verification is performed by the device operating system.',
+  'notifications': 'Notifications',
+  'mark_all_as_read': 'Mark All as Read',
+  'unread': 'Unread',
+  'notifications_could_not_be_loaded': 'Notifications could not be loaded yet.',
+  'no_notifications_yet': 'There are no notifications yet.',
+  'no_unread_notifications': 'All notifications have been read.',
+  'delete_notification': 'Delete Notification?',
+  'delete_notification_description':
+      'This notification will be removed from DokiDo.',
+  'record_now': 'Record Now',
+  'view_budget': 'View Budget',
+  'fix': 'Fix',
+  'view_period': 'View Period',
+  'notification_recurring_title': '{title} Needs to Be Recorded',
+  'notification_recurring_body': '{amount} is scheduled for {date}.',
+  'notification_recurring_category_body':
+      '{amount} is scheduled for {date} from {category}.',
+  'notification_budget_warning_title': 'Budget Is Almost Used Up',
+  'notification_budget_warning_body':
+      '{category} has reached {percent}% usage.',
+  'notification_budget_exceeded_title': 'Budget Exceeded',
+  'notification_budget_exceeded_body':
+      '{category} has reached {percent}% of its budget limit.',
+  'notification_backup_failed_title': 'Automatic Backup Failed',
+  'notification_backup_failed_body':
+      'The backup folder cannot be accessed. Choose the backup location again.',
+  'notification_period_ending_title': 'Period Ending Soon',
+  'notification_period_ending_today_body': 'Period {period} ends today.',
+  'notification_period_ending_one_day_body': 'Period {period} ends in 1 day.',
+  'notification_period_ending_many_days_body':
+      'Period {period} ends in {days} days.',
+  'financial_alert_notification_channel': 'Financial Alerts',
+  'financial_alert_notification_channel_description':
+      'DokiDo budget, period, and backup alerts.',
+  'private_notification_title': 'DokiDo Notification',
+  'private_notification_body': 'Open DokiDo to view the latest notification.',
 };

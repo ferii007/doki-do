@@ -19,6 +19,7 @@ import '../../domain/entities/transaction_type.dart';
 import '../../domain/services/recurring_notification_draft_resolver.dart';
 import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/presentation/providers/app_settings_provider.dart';
+import '../../../notifications/presentation/providers/notification_inbox_provider.dart';
 import '../providers/current_budget_provider.dart';
 import '../providers/finance_repository_provider.dart';
 import '../providers/recurring_notification_provider.dart';
@@ -34,11 +35,8 @@ import '../widgets/dashboard/period_selector_sheet.dart';
 import '../widgets/dashboard/period_edit_sheet.dart';
 import '../widgets/dashboard/period_statistics_chart.dart';
 import '../widgets/dashboard/period_summary_card.dart';
-// ProfileTabBody tetap tersedia untuk diaktifkan kembali setelah tab Profil
-// dikembalikan ke footer.
-// import '../widgets/dashboard/profile_tab_body.dart';
+import '../widgets/dashboard/profile_tab_body.dart';
 import '../widgets/dashboard/quick_action_sheet.dart';
-import '../widgets/dashboard/settings_tab_body.dart';
 import '../widgets/transaction_type_icon.dart';
 
 class DashboardScreen extends ConsumerStatefulWidget {
@@ -51,6 +49,7 @@ class DashboardScreen extends ConsumerStatefulWidget {
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
   String? _handledNotificationOccurrence;
+  String? _handledInboxNotificationId;
   bool _notificationPermissionChecked = false;
 
   @override
@@ -58,6 +57,11 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
     ref.listen(recurringNotificationPayloadProvider, (_, next) {
       next.whenData(_openRecurringNotification);
     });
+    ref.listen(inboxNotificationPayloadProvider, (_, next) {
+      next.whenData(_openInboxNotification);
+    });
+    ref.watch(notificationInboxBootstrapProvider);
+    final unreadNotificationCount = ref.watch(unreadNotificationCountProvider);
     final budgetAsync = ref.watch(currentBudgetProvider);
     final periodsAsync = ref.watch(budgetPeriodsProvider);
     final selectedPeriodId = ref.watch(selectedPeriodIdProvider);
@@ -76,16 +80,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
       appBar: AppBar(
         title: Text(switch (_selectedIndex) {
           2 => context.tr('activity_history'),
-          3 => context.tr('settings'),
+          3 => context.tr('profile'),
           _ => 'DokiDo',
         }),
-        // actions: [
-        //   IconButton(onPressed: () {}, icon: const Icon(Icons.search)),
-        //   IconButton(
-        //     onPressed: () {},
-        //     icon: const Icon(Icons.notifications_none),
-        //   ),
-        // ],
+        actions: [
+          _NotificationHeaderButton(
+            unreadCount: unreadNotificationCount,
+            onTap: () => Navigator.pushNamed(context, AppRouter.notifications),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: budgetAsync.when(
         loading: () => _DashboardLoadingView(selectedIndex: _selectedIndex),
@@ -118,7 +122,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   else if (_selectedIndex == 2)
                     const HistoryTabBody()
                   else
-                    const SettingsTabBody(),
+                    const ProfileTabBody(currentSnapshot: null),
                 ],
               ),
             );
@@ -212,7 +216,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
                   if (_selectedIndex == 2)
                     const HistoryTabBody()
                   else
-                    const SettingsTabBody(),
+                    ProfileTabBody(currentSnapshot: snapshot),
                 ],
               ],
             ),
@@ -250,6 +254,16 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         ? AppRouter.addIncome
         : AppRouter.addExpense;
     await Navigator.pushNamed(context, route, arguments: draft);
+  }
+
+  Future<void> _openInboxNotification(InboxNotificationPayload payload) async {
+    if (_handledInboxNotificationId == payload.notificationId) return;
+    _handledInboxNotificationId = payload.notificationId;
+    await ref
+        .read(notificationInboxProvider.notifier)
+        .markRead(payload.notificationId);
+    if (!mounted) return;
+    await Navigator.pushNamed(context, AppRouter.notifications);
   }
 
   Future<void> _showNotificationPermissionIfNeeded(AppSettings settings) async {
@@ -461,6 +475,54 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         .deleteBudgetPeriod(period.id);
     if (!mounted) return;
     AppToast.show(context, context.tr('financial_period_deleted_successfully'));
+  }
+}
+
+class _NotificationHeaderButton extends StatelessWidget {
+  final int unreadCount;
+  final VoidCallback onTap;
+
+  const _NotificationHeaderButton({
+    required this.unreadCount,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final badgeText = unreadCount > 99 ? '99+' : '$unreadCount';
+    return IconButton(
+      onPressed: onTap,
+      tooltip: context.tr('notifications'),
+      icon: Stack(
+        clipBehavior: Clip.none,
+        children: [
+          const Icon(Icons.notifications_none_rounded),
+          if (unreadCount > 0)
+            Positioned(
+              right: -7,
+              top: -7,
+              child: Container(
+                constraints: const BoxConstraints(minWidth: 18, minHeight: 18),
+                padding: const EdgeInsets.symmetric(horizontal: 4),
+                alignment: Alignment.center,
+                decoration: BoxDecoration(
+                  color: AppColors.danger,
+                  borderRadius: BorderRadius.circular(99),
+                  border: Border.all(color: Colors.white, width: 1.5),
+                ),
+                child: Text(
+                  badgeText,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: Colors.white,
+                    fontSize: 9,
+                    fontWeight: FontWeight.w900,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
   }
 }
 
@@ -821,8 +883,6 @@ class _DashboardFooter extends StatelessWidget {
               selectedIcon: Icons.account_balance_wallet,
               onTap: () => onChanged(1),
             ),
-            // ProfileTabBody tetap disimpan, tetapi akses dari footer
-            // dinonaktifkan sementara untuk memberi tempat pada Riwayat.
             _FooterIconButton(
               selected: selectedIndex == 2,
               icon: Icons.history_rounded,
@@ -831,8 +891,8 @@ class _DashboardFooter extends StatelessWidget {
             ),
             _FooterIconButton(
               selected: selectedIndex == 3,
-              icon: Icons.settings_outlined,
-              selectedIcon: Icons.settings_rounded,
+              icon: Icons.person_outline_rounded,
+              selectedIcon: Icons.person_rounded,
               onTap: () => onChanged(3),
             ),
           ],

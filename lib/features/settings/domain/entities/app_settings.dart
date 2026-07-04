@@ -72,7 +72,9 @@ class AppSettings {
       userType: json['user_type'] as String? ?? defaults.userType,
       themeId: json['theme_id'] as String? ?? defaults.themeId,
       languageCode: json['language_code'] as String? ?? defaults.languageCode,
-      currencyCode: json['currency_code'] as String? ?? defaults.currencyCode,
+      currencyCode: AppCurrency.byCode(
+        json['currency_code'] as String? ?? defaults.currencyCode,
+      ).code,
       hideFinancialAmounts:
           json['hide_financial_amounts'] as bool? ??
           defaults.hideFinancialAmounts,

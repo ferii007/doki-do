@@ -27,7 +27,10 @@ class SettingsTabBody extends ConsumerWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _AccountProfileCard(settings: value),
+          _AccountProfileCard(
+            settings: value,
+            onDisplayNameTap: () => _showDisplayNameSheet(context, ref, value),
+          ),
           const SizedBox(height: 14),
           _SettingsSection(
             title: context.tr('security'),
@@ -97,17 +100,6 @@ class SettingsTabBody extends ConsumerWidget {
               ),
             ],
           ),
-          const SizedBox(height: 18),
-          Center(
-            child: Text(
-              context.tr('powered_by_feri'),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                color: AppColors.textSecondary.withValues(alpha: 0.72),
-                fontWeight: FontWeight.w700,
-              ),
-            ),
-          ),
-
           /*
           const SizedBox(height: 14),
           _SettingsSection(
@@ -243,6 +235,21 @@ class SettingsTabBody extends ConsumerWidget {
     );
   }
 
+  Future<void> _showDisplayNameSheet(
+    BuildContext context,
+    WidgetRef ref,
+    AppSettings settings,
+  ) async {
+    final name = await showModalBottomSheet<String>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (_) => _DisplayNameSheet(initialName: settings.displayName),
+    );
+    if (name == null || !context.mounted) return;
+    await _saveSettings(context, ref, settings.copyWith(displayName: name));
+  }
+
   Future<void> _showLanguageSheet(
     BuildContext context,
     WidgetRef ref,
@@ -318,8 +325,12 @@ class SettingsTabBody extends ConsumerWidget {
 
 class _AccountProfileCard extends StatelessWidget {
   final AppSettings settings;
+  final VoidCallback onDisplayNameTap;
 
-  const _AccountProfileCard({required this.settings});
+  const _AccountProfileCard({
+    required this.settings,
+    required this.onDisplayNameTap,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -392,6 +403,7 @@ class _AccountProfileCard extends StatelessWidget {
             icon: Icons.badge_rounded,
             label: context.tr('display_name'),
             value: settings.displayName,
+            onTap: onDisplayNameTap,
           ),
           _SettingsOptionRow(
             icon: Icons.work_rounded,
@@ -410,6 +422,95 @@ class _AccountProfileCard extends StatelessWidget {
         ],
       ),
     );
+  }
+}
+
+class _DisplayNameSheet extends StatefulWidget {
+  final String initialName;
+
+  const _DisplayNameSheet({required this.initialName});
+
+  @override
+  State<_DisplayNameSheet> createState() => _DisplayNameSheetState();
+}
+
+class _DisplayNameSheetState extends State<_DisplayNameSheet> {
+  late final TextEditingController _controller;
+  String? _errorKey;
+
+  @override
+  void initState() {
+    super.initState();
+    _controller = TextEditingController(text: widget.initialName);
+  }
+
+  @override
+  void dispose() {
+    _controller.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return AppSheetSurface(
+      padding: EdgeInsets.fromLTRB(
+        20,
+        10,
+        20,
+        MediaQuery.viewInsetsOf(context).bottom + 20,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          AppSheetHeader(
+            title: context.tr('change_display_name'),
+            icon: Icons.badge_outlined,
+          ),
+          const SizedBox(height: 28),
+          TextField(
+            controller: _controller,
+            autofocus: true,
+            textCapitalization: TextCapitalization.words,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
+            decoration: InputDecoration(
+              labelText: context.tr('display_name'),
+              hintText: context.tr('display_name_hint'),
+            ),
+          ),
+          if (_errorKey != null) ...[
+            const SizedBox(height: 10),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: Text(
+                context.tr(_errorKey!),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: AppColors.danger,
+                  fontWeight: FontWeight.w700,
+                ),
+              ),
+            ),
+          ],
+          const SizedBox(height: 20),
+          SizedBox(
+            width: double.infinity,
+            child: FilledButton(
+              onPressed: _submit,
+              child: Text(context.tr('save_changes')),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _submit() {
+    final name = _controller.text.trim();
+    if (name.isEmpty) {
+      setState(() => _errorKey = 'display_name_required');
+      return;
+    }
+    Navigator.pop(context, name);
   }
 }
 

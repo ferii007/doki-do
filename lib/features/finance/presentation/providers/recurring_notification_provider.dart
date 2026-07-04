@@ -22,6 +22,15 @@ final recurringNotificationPayloadProvider =
       yield* service.payloads;
     });
 
+final inboxNotificationPayloadProvider =
+    StreamProvider<InboxNotificationPayload>((ref) async* {
+      final service = ref.watch(recurringNotificationServiceProvider);
+      await service.initialize();
+      final pending = service.takePendingInboxPayload();
+      if (pending != null) yield pending;
+      yield* service.inboxPayloads;
+    });
+
 Future<void> syncRecurringNotifications(Ref ref) async {
   final service = ref.read(recurringNotificationServiceProvider);
   final settings = await ref.read(appSettingsProvider.future);

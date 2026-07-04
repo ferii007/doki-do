@@ -1,11 +1,15 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/localization/app_localizations.dart';
 import '../../../finance/presentation/providers/current_budget_provider.dart';
 import '../../../finance/presentation/providers/finance_repository_provider.dart';
 import '../../../finance/presentation/providers/recurring_notification_provider.dart';
 import '../../../finance/presentation/providers/selected_period_provider.dart';
 import '../../../finance/presentation/providers/transaction_template_provider.dart';
+import '../../../notifications/domain/app_notification_item.dart';
+import '../../../notifications/presentation/notification_text_resolver.dart';
+import '../../../notifications/presentation/providers/notification_inbox_provider.dart';
 import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/presentation/providers/app_settings_provider.dart';
 import '../../data/backup_credential_store.dart';
@@ -32,6 +36,7 @@ final backupServiceProvider = Provider<BackupService>((ref) {
   return BackupService(
     financeDatasource: ref.watch(financeLocalDatasourceProvider),
     settingsDatasource: ref.watch(settingsLocalDatasourceProvider),
+    notificationDatasource: ref.watch(notificationLocalDatasourceProvider),
     codec: ref.watch(backupArchiveCodecProvider),
     fileGateway: ref.watch(backupFileGatewayProvider),
   );
@@ -168,6 +173,14 @@ class BackupController extends AsyncNotifier<BackupState> {
     try {
       await backupNow();
     } on Object catch (error, stackTrace) {
+      try {
+        await _recordAutomaticBackupFailure(settings);
+      } on Object catch (notificationError, notificationStackTrace) {
+        await reportNotificationInboxError(
+          notificationError,
+          notificationStackTrace,
+        );
+      }
       FlutterError.reportError(
         FlutterErrorDetails(
           exception: error,
@@ -178,6 +191,43 @@ class BackupController extends AsyncNotifier<BackupState> {
     } finally {
       _autoBackupRunning = false;
     }
+  }
+
+  Future<void> _recordAutomaticBackupFailure(AppSettings settings) async {
+    final now = DateTime.now();
+    final month = now.month.toString().padLeft(2, '0');
+    final day = now.day.toString().padLeft(2, '0');
+    final item = AppNotificationItem(
+      id: 'backup-failed:${now.year}-$month-$day',
+      category: AppNotificationCategory.backup,
+      createdAt: now,
+      data: {'folder_name': settings.backupFolderName},
+    );
+    final created = await ref
+        .read(notificationInboxProvider.notifier)
+        .add(item);
+    if (!created) return;
+
+    final resolver = NotificationTextResolver(
+      localizations: AppLocalizations(settings.language),
+      currency: settings.currency,
+    );
+    await ref
+        .read(recurringNotificationServiceProvider)
+        .showInboxNotification(
+          notificationId: item.id,
+          title: settings.appLockEnabled
+              ? AppLocalizations(
+                  settings.language,
+                ).tr('private_notification_title')
+              : resolver.title(item),
+          body: settings.appLockEnabled
+              ? AppLocalizations(
+                  settings.language,
+                ).tr('private_notification_body')
+              : resolver.body(item),
+          language: settings.language,
+        );
   }
 
   AppSettings _requireSettings() {
@@ -197,5 +247,7 @@ class BackupController extends AsyncNotifier<BackupState> {
     ref.invalidate(recurringOccurrencesProvider);
     ref.invalidate(recurringDueItemsProvider);
     ref.invalidate(recurringNotificationBootstrapProvider);
+    ref.invalidate(notificationInboxProvider);
+    ref.invalidate(notificationInboxBootstrapProvider);
   }
 }

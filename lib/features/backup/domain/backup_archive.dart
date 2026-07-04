@@ -5,11 +5,13 @@ class BackupArchive {
   final DateTime createdAt;
   final Map<String, dynamic> finance;
   final Map<String, dynamic> settings;
+  final Map<String, dynamic>? notifications;
 
   const BackupArchive({
     required this.createdAt,
     required this.finance,
     required this.settings,
+    this.notifications,
   });
 
   Map<String, dynamic> toJson() {
@@ -19,6 +21,7 @@ class BackupArchive {
       'created_at': createdAt.toUtc().toIso8601String(),
       'finance': finance,
       'settings': settings,
+      if (notifications != null) 'notifications': notifications,
     };
   }
 
@@ -29,6 +32,7 @@ class BackupArchive {
     final createdAt = DateTime.tryParse(json['created_at'] as String? ?? '');
     final finance = json['finance'];
     final settings = json['settings'];
+    final notifications = json['notifications'];
     if (createdAt == null ||
         finance is! Map<String, dynamic> ||
         settings is! Map<String, dynamic>) {
@@ -38,6 +42,9 @@ class BackupArchive {
       createdAt: createdAt.toLocal(),
       finance: finance,
       settings: settings,
+      notifications: notifications is Map<String, dynamic>
+          ? notifications
+          : null,
     );
   }
 

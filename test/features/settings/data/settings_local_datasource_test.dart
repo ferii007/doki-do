@@ -74,7 +74,7 @@ void main() {
 
       expect(settings.displayName, 'Feri');
       expect(settings.languageCode, 'en');
-      expect(settings.currencyCode, 'USD');
+      expect(settings.currencyCode, 'IDR');
       expect(settings.hideFinancialAmounts, isTrue);
 
       final migratedContent = await file.readAsString();

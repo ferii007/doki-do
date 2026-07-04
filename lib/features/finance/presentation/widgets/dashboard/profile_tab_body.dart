@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../../app/router.dart';
 import '../../../../../app/theme/app_colors.dart';
+import '../../../../../core/app_info/app_version_provider.dart';
 import '../../../../../core/localization/app_localizations.dart';
 import '../../../../../core/widgets/amount_text.dart';
 import '../../../../../core/widgets/loading_view.dart';
@@ -19,6 +21,7 @@ class ProfileTabBody extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final snapshotsAsync = ref.watch(allBudgetSnapshotsProvider);
     final settings = ref.watch(appSettingsProvider).asData?.value;
+    final version = ref.watch(appVersionProvider).asData?.value ?? '-';
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 24, 16, 16),
@@ -55,10 +58,133 @@ class ProfileTabBody extends ConsumerWidget {
               ),
               const SizedBox(height: 16),
               _ProfileStatusCard(remaining: remaining),
+              const SizedBox(height: 16),
+              _ProfileMenuCard(
+                children: [
+                  _ProfileMenuRow(
+                    icon: Icons.settings_outlined,
+                    title: context.tr('settings'),
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRouter.settings),
+                  ),
+                  _ProfileMenuRow(
+                    icon: Icons.info_outline_rounded,
+                    title: context.tr('general_info'),
+                    onTap: () =>
+                        Navigator.pushNamed(context, AppRouter.generalInfo),
+                  ),
+                  _ProfileMenuRow(
+                    icon: Icons.apps_rounded,
+                    title: context.tr('version'),
+                    value: version,
+                    showDivider: false,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 18),
+              Center(
+                child: Text(
+                  context.tr('powered_by_niskala'),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: AppColors.textSecondary.withValues(alpha: 0.72),
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+              ),
             ],
           );
         },
       ),
+    );
+  }
+}
+
+class _ProfileMenuCard extends StatelessWidget {
+  final List<Widget> children;
+
+  const _ProfileMenuCard({required this.children});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      decoration: BoxDecoration(
+        color: AppColors.surface,
+        borderRadius: BorderRadius.circular(18),
+        border: Border.all(color: AppColors.border.withValues(alpha: 0.78)),
+      ),
+      child: Column(children: children),
+    );
+  }
+}
+
+class _ProfileMenuRow extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String? value;
+  final VoidCallback? onTap;
+  final bool showDivider;
+
+  const _ProfileMenuRow({
+    required this.icon,
+    required this.title,
+    this.value,
+    this.onTap,
+    this.showDivider = true,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      children: [
+        InkWell(
+          onTap: onTap,
+          overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+          borderRadius: BorderRadius.circular(14),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  width: 42,
+                  height: 42,
+                  decoration: BoxDecoration(
+                    color: AppColors.mintSurface,
+                    borderRadius: BorderRadius.circular(13),
+                  ),
+                  child: Icon(icon, color: AppColors.primary, size: 21),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Text(
+                    title,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: AppColors.textPrimary,
+                      fontWeight: FontWeight.w800,
+                    ),
+                  ),
+                ),
+                if (value != null)
+                  Text(
+                    value!,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: AppColors.textSecondary,
+                      fontWeight: FontWeight.w700,
+                    ),
+                  )
+                else
+                  Icon(
+                    Icons.chevron_right_rounded,
+                    color: AppColors.textSecondary,
+                  ),
+              ],
+            ),
+          ),
+        ),
+        if (showDivider)
+          Divider(height: 1, color: AppColors.border.withValues(alpha: 0.7)),
+      ],
     );
   }
 }

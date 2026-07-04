@@ -7,6 +7,8 @@ import 'package:doki_do/features/backup/data/backup_file_gateway.dart';
 import 'package:doki_do/features/backup/domain/backup_archive_codec.dart';
 import 'package:doki_do/features/backup/domain/backup_service.dart';
 import 'package:doki_do/features/finance/data/datasources/finance_local_datasource.dart';
+import 'package:doki_do/features/notifications/data/notification_local_datasource.dart';
+import 'package:doki_do/features/notifications/domain/app_notification_item.dart';
 import 'package:doki_do/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:path_provider_platform_interface/path_provider_platform_interface.dart';
@@ -15,6 +17,7 @@ void main() {
   late Directory tempDirectory;
   late FinanceLocalDatasource financeDatasource;
   late SettingsLocalDatasource settingsDatasource;
+  late NotificationLocalDatasource notificationDatasource;
   late MemoryBackupFileGateway fileGateway;
   late BackupService service;
 
@@ -32,11 +35,15 @@ void main() {
     settingsDatasource = SettingsLocalDatasource(
       encryptedStorage: encryptedStorage,
     );
+    notificationDatasource = NotificationLocalDatasource(
+      encryptedStorage: encryptedStorage,
+    );
     fileGateway = MemoryBackupFileGateway()
       ..directory = const BackupDirectory(uri: 'memory://backup', name: 'Test');
     service = BackupService(
       financeDatasource: financeDatasource,
       settingsDatasource: settingsDatasource,
+      notificationDatasource: notificationDatasource,
       codec: BackupArchiveCodec(
         credentialStore: MemoryBackupCredentialStore(),
         iterations: 10,
@@ -58,6 +65,15 @@ void main() {
     await settingsDatasource.saveSettings(
       initial.copyWith(displayName: 'Nama Dari Backup'),
     );
+    const notificationId = 'backup-notification';
+    await notificationDatasource.upsert(
+      AppNotificationItem(
+        id: notificationId,
+        category: AppNotificationCategory.backup,
+        createdAt: DateTime(2026, 7, 2, 9),
+        data: const {},
+      ),
+    );
     await service.configurePassword('rahasia-backup');
     await service.createBackup('memory://backup');
 
@@ -69,6 +85,7 @@ void main() {
         biometricUnlockEnabled: true,
       ),
     );
+    await notificationDatasource.delete(notificationId);
 
     final file = await service.readLatestBackup('memory://backup');
     final archive = await service.inspectBackup(file!, 'rahasia-backup');
@@ -78,6 +95,7 @@ void main() {
     expect(restored.displayName, 'Nama Dari Backup');
     expect(restored.appLockEnabled, isTrue);
     expect(restored.biometricUnlockEnabled, isTrue);
+    expect((await notificationDatasource.getAll()).single.id, notificationId);
   });
 
   test('rotates the previous backup instead of accumulating files', () async {
