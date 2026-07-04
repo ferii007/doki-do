@@ -11,7 +11,7 @@ import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_settings.dart';
 
 class SettingsLocalDatasource {
-  static const _schemaVersion = 1;
+  static const _schemaVersion = 2;
   static const _storageFileName = 'doki_do_settings.json';
   static const _encryptionScope = 'settings';
 
@@ -78,6 +78,10 @@ class SettingsLocalDatasource {
         case 0:
           settings['schema_version'] = 1;
           version = 1;
+        case 1:
+          settings['notification_permission_prompt_dismissed'] ??= false;
+          settings['schema_version'] = 2;
+          version = 2;
         default:
           throw FormatException(
             'No settings migration exists from schema version $version.',

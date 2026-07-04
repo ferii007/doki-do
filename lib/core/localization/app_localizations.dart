@@ -296,6 +296,18 @@ const _id = <String, String>{
   'recurring_notification_channel': 'Transaksi Berulang',
   'recurring_notification_channel_description':
       'Pengingat untuk draf uang masuk dan uang keluar berulang.',
+  'enable_transaction_reminders': 'Aktifkan Pengingat Transaksi',
+  'notification_permission_modal_description':
+      'Izinkan notifikasi DokiDo melalui pengaturan perangkat supaya transaksi berulang tidak terlewat. Memilih Lain Kali akan menutup pengingat ini secara permanen.',
+  'go_to_settings': 'Pergi Ke Pengaturan',
+  'open_settings': 'Buka Pengaturan',
+  'later': 'Lain Kali',
+  'income_recorded_notification_not_allowed':
+      'Uang masuk dan pengingat tersimpan, tetapi notifikasi belum diizinkan.',
+  'expense_recorded_notification_not_allowed':
+      'Uang keluar dan pengingat tersimpan, tetapi notifikasi belum diizinkan.',
+  'recurring_updated_notification_not_allowed':
+      'Perubahan tersimpan, tetapi notifikasi belum diizinkan.',
   'error_recurring_template_not_found':
       'Jadwal transaksi berulang sudah tidak tersedia.',
   'error_recurring_occurrence_already_processed':
@@ -894,6 +906,18 @@ const _en = <String, String>{
   'recurring_notification_channel': 'Recurring Transactions',
   'recurring_notification_channel_description':
       'Reminders for recurring income and expense drafts.',
+  'enable_transaction_reminders': 'Enable Transaction Reminders',
+  'notification_permission_modal_description':
+      'Allow DokiDo notifications in your device settings so recurring transactions are not missed. Choosing Later will permanently dismiss this reminder.',
+  'go_to_settings': 'Go To Settings',
+  'open_settings': 'Open Settings',
+  'later': 'Later',
+  'income_recorded_notification_not_allowed':
+      'The income and reminder were saved, but notifications are not allowed.',
+  'expense_recorded_notification_not_allowed':
+      'The expense and reminder were saved, but notifications are not allowed.',
+  'recurring_updated_notification_not_allowed':
+      'Changes were saved, but notifications are not allowed.',
   'error_recurring_template_not_found':
       'The recurring transaction schedule is no longer available.',
   'error_recurring_occurrence_already_processed':

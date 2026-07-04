@@ -13,11 +13,24 @@ final recurringNotificationBootstrapProvider = FutureProvider<void>((ref) {
   return syncRecurringNotifications(ref);
 });
 
+final recurringNotificationPayloadProvider =
+    StreamProvider<RecurringNotificationPayload>((ref) async* {
+      final service = ref.watch(recurringNotificationServiceProvider);
+      await service.initialize();
+      final pending = service.takePendingPayload();
+      if (pending != null) yield pending;
+      yield* service.payloads;
+    });
+
 Future<void> syncRecurringNotifications(Ref ref) async {
   final service = ref.read(recurringNotificationServiceProvider);
   final settings = await ref.read(appSettingsProvider.future);
-  final templates = await ref
-      .read(financeRepositoryProvider)
-      .getTransactionTemplates();
-  await service.sync(templates: templates, language: settings.language);
+  final repository = ref.read(financeRepositoryProvider);
+  final templates = await repository.getTransactionTemplates();
+  final occurrences = await repository.getRecurringOccurrences();
+  await service.sync(
+    templates: templates,
+    occurrences: occurrences,
+    language: settings.language,
+  );
 }

@@ -1,24 +1,52 @@
+import 'dart:async';
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_timezone/flutter_timezone.dart';
 import 'package:timezone/data/latest.dart' as tz_data;
 import 'package:timezone/timezone.dart' as tz;
 
+import '../../features/finance/domain/entities/recurring_occurrence.dart';
 import '../../features/finance/domain/entities/transaction_template.dart';
-import '../../features/finance/domain/services/monthly_recurrence_calculator.dart';
+import '../../features/finance/domain/services/recurring_notification_planner.dart';
 import '../../features/settings/domain/entities/app_language.dart';
 import '../localization/app_localizations.dart';
 
 class RecurringNotificationService {
+  static const _settingsChannel = MethodChannel(
+    'com.dokido.finance/notification_settings',
+  );
+
   final FlutterLocalNotificationsPlugin _plugin;
+  final _payloadController =
+      StreamController<RecurringNotificationPayload>.broadcast();
   bool _initialized = false;
+  bool _launchPayloadRead = false;
+  Future<void>? _initialization;
+  RecurringNotificationPayload? _pendingPayload;
 
   RecurringNotificationService({FlutterLocalNotificationsPlugin? plugin})
     : _plugin = plugin ?? FlutterLocalNotificationsPlugin();
 
   Future<void> initialize() async {
     if (_initialized || kIsWeb) return;
+    final inProgress = _initialization;
+    if (inProgress != null) {
+      await inProgress;
+      return;
+    }
 
+    final initialization = _initialize();
+    _initialization = initialization;
+    try {
+      await initialization;
+    } finally {
+      _initialization = null;
+    }
+  }
+
+  Future<void> _initialize() async {
     const settings = InitializationSettings(
       android: AndroidInitializationSettings('@mipmap/ic_launcher'),
       iOS: DarwinInitializationSettings(
@@ -27,12 +55,39 @@ class RecurringNotificationService {
         requestSoundPermission: false,
       ),
     );
-    await _plugin.initialize(settings);
+    await _plugin.initialize(
+      settings,
+      onDidReceiveNotificationResponse: (response) {
+        _publishPayload(response.payload);
+      },
+    );
 
     tz_data.initializeTimeZones();
+    await _publishLaunchPayload();
+    _initialized = true;
+  }
+
+  Future<void> _refreshLocalTimezone() async {
     final timezone = await FlutterTimezone.getLocalTimezone();
     tz.setLocalLocation(tz.getLocation(timezone.identifier));
-    _initialized = true;
+  }
+
+  Future<void> _publishLaunchPayload() async {
+    if (_launchPayloadRead) return;
+    _launchPayloadRead = true;
+    final launchDetails = await _plugin.getNotificationAppLaunchDetails();
+    if (launchDetails?.didNotificationLaunchApp ?? false) {
+      _publishPayload(launchDetails?.notificationResponse?.payload);
+    }
+  }
+
+  Stream<RecurringNotificationPayload> get payloads =>
+      _payloadController.stream;
+
+  RecurringNotificationPayload? takePendingPayload() {
+    final payload = _pendingPayload;
+    _pendingPayload = null;
+    return payload;
   }
 
   Future<bool> requestPermission() async {
@@ -56,37 +111,69 @@ class RecurringNotificationService {
     return androidGranted ?? iosGranted ?? true;
   }
 
+  Future<bool> areNotificationsEnabled() async {
+    await initialize();
+    if (kIsWeb) return false;
+
+    final android = _plugin
+        .resolvePlatformSpecificImplementation<
+          AndroidFlutterLocalNotificationsPlugin
+        >();
+    if (android != null) {
+      return await android.areNotificationsEnabled() ?? false;
+    }
+
+    final ios = _plugin
+        .resolvePlatformSpecificImplementation<
+          IOSFlutterLocalNotificationsPlugin
+        >();
+    if (ios != null) {
+      return (await ios.checkPermissions())?.isEnabled ?? false;
+    }
+    return true;
+  }
+
+  Future<bool> openNotificationSettings() async {
+    if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+      final granted = await requestPermission();
+      if (granted) return true;
+    }
+    try {
+      await _settingsChannel.invokeMethod<void>('openNotificationSettings');
+      return true;
+    } on PlatformException {
+      return false;
+    } on MissingPluginException {
+      return false;
+    }
+  }
+
   Future<void> sync({
     required List<TransactionTemplate> templates,
+    required List<RecurringOccurrence> occurrences,
     required AppLanguage language,
     DateTime? now,
   }) async {
     await initialize();
     if (kIsWeb) return;
 
+    await _refreshLocalTimezone();
     await _plugin.cancelAllPendingNotifications();
     final current = now ?? DateTime.now();
     final localizations = AppLocalizations(language);
-    final candidates = <_ScheduledRecurringNotification>[];
-
-    for (final template in templates) {
-      if (!template.isRecurring ||
-          !template.isActive ||
-          !template.reminderEnabled) {
-        continue;
-      }
-      candidates.addAll(_notificationCandidates(template, current));
-    }
-
-    candidates.sort((a, b) => a.scheduled.compareTo(b.scheduled));
-    for (final candidate in candidates.take(48)) {
+    final schedules = RecurringNotificationPlanner.build(
+      templates: templates,
+      occurrences: occurrences,
+      now: current,
+    );
+    for (final schedule in schedules) {
       await _plugin.zonedSchedule(
-        _notificationId(candidate.template.id, candidate.dueDate),
+        _notificationId(schedule.template.id, schedule.dueDate),
         localizations.tr('recurring_notification_title'),
         localizations.trf('recurring_notification_body', {
-          'title': candidate.template.title,
+          'title': schedule.template.title,
         }),
-        tz.TZDateTime.from(candidate.scheduled, tz.local),
+        tz.TZDateTime.from(schedule.scheduledAt, tz.local),
         NotificationDetails(
           android: AndroidNotificationDetails(
             'recurring_transactions',
@@ -101,58 +188,19 @@ class RecurringNotificationService {
         ),
         androidScheduleMode: AndroidScheduleMode.inexactAllowWhileIdle,
         payload:
-            'recurring:${candidate.template.id}:'
-            '${candidate.dueDate.toIso8601String()}',
+            'recurring:${schedule.template.id}:'
+            '${schedule.dueDate.toIso8601String()}',
       );
     }
   }
 
-  List<_ScheduledRecurringNotification> _notificationCandidates(
-    TransactionTemplate template,
-    DateTime now,
-  ) {
-    final preferredDay = template.dayOfMonth;
-    if (preferredDay == null) return const [];
-
-    final candidates = <_ScheduledRecurringNotification>[];
-    var month = DateTime(now.year, now.month);
-    for (var index = 0; index < 24; index++) {
-      final dueDate = MonthlyRecurrenceCalculator.dueDateForMonth(
-        year: month.year,
-        month: month.month,
-        preferredDay: preferredDay,
-      );
-      final scheduled = DateTime(
-        dueDate.year,
-        dueDate.month,
-        dueDate.day,
-        template.reminderHour,
-        template.reminderMinute,
-      );
-      final withinActiveRange =
-          !dueDate.isBefore(_dateOnly(template.activeFromDate)) &&
-          (template.endDate == null ||
-              !dueDate.isAfter(_dateOnly(template.endDate!)));
-
-      if (withinActiveRange && scheduled.isAfter(now)) {
-        candidates.add(
-          _ScheduledRecurringNotification(
-            template: template,
-            dueDate: dueDate,
-            scheduled: scheduled,
-          ),
-        );
-      }
-
-      if (template.endDate != null &&
-          month.isAfter(
-            DateTime(template.endDate!.year, template.endDate!.month),
-          )) {
-        break;
-      }
-      month = DateTime(month.year, month.month + 1);
-    }
-    return candidates;
+  Future<void> cancelOccurrence({
+    required String templateId,
+    required DateTime dueDate,
+  }) async {
+    await initialize();
+    if (kIsWeb) return;
+    await _plugin.cancel(_notificationId(templateId, dueDate));
   }
 
   int _notificationId(String templateId, DateTime dueDate) {
@@ -165,19 +213,44 @@ class RecurringNotificationService {
     return hash;
   }
 
-  DateTime _dateOnly(DateTime value) {
-    return DateTime(value.year, value.month, value.day);
+  void _publishPayload(String? rawPayload) {
+    final payload = RecurringNotificationPayload.tryParse(rawPayload);
+    if (payload == null) return;
+    if (_payloadController.hasListener) {
+      _payloadController.add(payload);
+    } else {
+      _pendingPayload = payload;
+    }
   }
 }
 
-class _ScheduledRecurringNotification {
-  final TransactionTemplate template;
+class RecurringNotificationPayload {
+  final String templateId;
   final DateTime dueDate;
-  final DateTime scheduled;
 
-  const _ScheduledRecurringNotification({
-    required this.template,
+  const RecurringNotificationPayload({
+    required this.templateId,
     required this.dueDate,
-    required this.scheduled,
   });
+
+  String get occurrenceKey {
+    final month = dueDate.month.toString().padLeft(2, '0');
+    return '${templateId}_${dueDate.year}_$month';
+  }
+
+  static RecurringNotificationPayload? tryParse(String? rawPayload) {
+    const prefix = 'recurring:';
+    if (rawPayload == null || !rawPayload.startsWith(prefix)) return null;
+
+    final value = rawPayload.substring(prefix.length);
+    final separator = value.indexOf(':');
+    if (separator <= 0 || separator == value.length - 1) return null;
+    final dueDate = DateTime.tryParse(value.substring(separator + 1));
+    if (dueDate == null) return null;
+
+    return RecurringNotificationPayload(
+      templateId: value.substring(0, separator),
+      dueDate: dueDate,
+    );
+  }
 }

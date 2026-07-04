@@ -6,6 +6,7 @@ import '../../../../app/theme/app_colors.dart';
 import '../../../../core/formatters/date_formatter.dart';
 import '../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../core/localization/app_localizations.dart';
+import '../../../../core/notifications/recurring_notification_service.dart';
 import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/delete_confirmation_dialog.dart';
 import '../../../../core/widgets/error_view.dart';
@@ -15,8 +16,12 @@ import '../../domain/entities/budget_snapshot.dart';
 import '../../domain/entities/category_budget.dart';
 import '../../domain/entities/recurring_due_item.dart';
 import '../../domain/entities/transaction_type.dart';
+import '../../domain/services/recurring_notification_draft_resolver.dart';
+import '../../../settings/domain/entities/app_settings.dart';
 import '../../../settings/presentation/providers/app_settings_provider.dart';
 import '../providers/current_budget_provider.dart';
+import '../providers/finance_repository_provider.dart';
+import '../providers/recurring_notification_provider.dart';
 import '../providers/selected_period_provider.dart';
 import '../providers/transaction_action_provider.dart';
 import '../providers/transaction_template_provider.dart';
@@ -24,6 +29,7 @@ import '../widgets/dashboard/budget_category_grid.dart';
 import '../widgets/dashboard/category_adjustment_sheet.dart';
 import '../widgets/dashboard/category_edit_sheet.dart';
 import '../widgets/dashboard/history_tab_body.dart';
+import '../widgets/dashboard/notification_permission_sheet.dart';
 import '../widgets/dashboard/period_selector_sheet.dart';
 import '../widgets/dashboard/period_edit_sheet.dart';
 import '../widgets/dashboard/period_statistics_chart.dart';
@@ -44,14 +50,25 @@ class DashboardScreen extends ConsumerStatefulWidget {
 
 class _DashboardScreenState extends ConsumerState<DashboardScreen> {
   int _selectedIndex = 0;
+  String? _handledNotificationOccurrence;
+  bool _notificationPermissionChecked = false;
 
   @override
   Widget build(BuildContext context) {
+    ref.listen(recurringNotificationPayloadProvider, (_, next) {
+      next.whenData(_openRecurringNotification);
+    });
     final budgetAsync = ref.watch(currentBudgetProvider);
     final periodsAsync = ref.watch(budgetPeriodsProvider);
     final selectedPeriodId = ref.watch(selectedPeriodIdProvider);
     final isSaving = ref.watch(transactionActionProvider);
     final settings = ref.watch(appSettingsProvider).asData?.value;
+    if (!_notificationPermissionChecked && settings != null) {
+      _notificationPermissionChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback(
+        (_) => _showNotificationPermissionIfNeeded(settings),
+      );
+    }
     FinancialPrivacyPreference.hideAmounts =
         settings?.hideFinancialAmounts ?? false;
 
@@ -206,6 +223,65 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         selectedIndex: _selectedIndex,
         onChanged: (index) {
           setState(() => _selectedIndex = index);
+        },
+      ),
+    );
+  }
+
+  Future<void> _openRecurringNotification(
+    RecurringNotificationPayload payload,
+  ) async {
+    final key = payload.occurrenceKey;
+    if (_handledNotificationOccurrence == key) return;
+    _handledNotificationOccurrence = key;
+
+    final repository = ref.read(financeRepositoryProvider);
+    final occurrences = await repository.getRecurringOccurrences();
+    final templates = await repository.getTransactionTemplates();
+    final draft = RecurringNotificationDraftResolver.resolve(
+      templateId: payload.templateId,
+      dueDate: payload.dueDate,
+      templates: templates,
+      occurrences: occurrences,
+    );
+    if (draft == null || !mounted) return;
+
+    final route = draft.template.type == TransactionType.income
+        ? AppRouter.addIncome
+        : AppRouter.addExpense;
+    await Navigator.pushNamed(context, route, arguments: draft);
+  }
+
+  Future<void> _showNotificationPermissionIfNeeded(AppSettings settings) async {
+    if (settings.notificationPermissionPromptDismissed || !mounted) return;
+
+    bool enabled;
+    try {
+      enabled = await ref
+          .read(recurringNotificationServiceProvider)
+          .areNotificationsEnabled();
+    } catch (_) {
+      return;
+    }
+    if (enabled || !mounted) return;
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isDismissible: false,
+      enableDrag: false,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) => NotificationPermissionSheet(
+        onOpenSettings: () {
+          Navigator.pop(sheetContext);
+          ref
+              .read(recurringNotificationServiceProvider)
+              .openNotificationSettings();
+        },
+        onDismissForever: () async {
+          await ref
+              .read(appSettingsProvider.notifier)
+              .dismissNotificationPermissionPrompt();
+          if (sheetContext.mounted) Navigator.pop(sheetContext);
         },
       ),
     );

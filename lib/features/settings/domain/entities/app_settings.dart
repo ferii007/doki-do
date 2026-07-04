@@ -11,6 +11,7 @@ class AppSettings {
   final String languageCode;
   final String currencyCode;
   final bool hideFinancialAmounts;
+  final bool notificationPermissionPromptDismissed;
 
   const AppSettings({
     required this.hasCompletedSetup,
@@ -21,6 +22,7 @@ class AppSettings {
     required this.languageCode,
     required this.currencyCode,
     required this.hideFinancialAmounts,
+    required this.notificationPermissionPromptDismissed,
   });
 
   factory AppSettings.defaults() {
@@ -33,6 +35,7 @@ class AppSettings {
       languageCode: 'id',
       currencyCode: 'IDR',
       hideFinancialAmounts: false,
+      notificationPermissionPromptDismissed: false,
     );
   }
 
@@ -50,6 +53,9 @@ class AppSettings {
       hideFinancialAmounts:
           json['hide_financial_amounts'] as bool? ??
           defaults.hideFinancialAmounts,
+      notificationPermissionPromptDismissed:
+          json['notification_permission_prompt_dismissed'] as bool? ??
+          defaults.notificationPermissionPromptDismissed,
     );
   }
 
@@ -63,6 +69,8 @@ class AppSettings {
       'language_code': languageCode,
       'currency_code': currencyCode,
       'hide_financial_amounts': hideFinancialAmounts,
+      'notification_permission_prompt_dismissed':
+          notificationPermissionPromptDismissed,
     };
   }
 
@@ -79,6 +87,7 @@ class AppSettings {
     String? languageCode,
     String? currencyCode,
     bool? hideFinancialAmounts,
+    bool? notificationPermissionPromptDismissed,
   }) {
     return AppSettings(
       hasCompletedSetup: hasCompletedSetup ?? this.hasCompletedSetup,
@@ -89,6 +98,9 @@ class AppSettings {
       languageCode: languageCode ?? this.languageCode,
       currencyCode: currencyCode ?? this.currencyCode,
       hideFinancialAmounts: hideFinancialAmounts ?? this.hideFinancialAmounts,
+      notificationPermissionPromptDismissed:
+          notificationPermissionPromptDismissed ??
+          this.notificationPermissionPromptDismissed,
     );
   }
 }

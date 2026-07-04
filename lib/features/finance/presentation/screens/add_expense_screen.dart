@@ -15,6 +15,7 @@ import '../../domain/entities/recurring_due_item.dart';
 import '../../domain/entities/transaction_template.dart';
 import '../../domain/entities/transaction_type.dart';
 import '../providers/current_budget_provider.dart';
+import '../providers/recurring_notification_provider.dart';
 import '../providers/selected_period_provider.dart';
 import '../providers/transaction_action_provider.dart';
 import '../providers/transaction_template_provider.dart';
@@ -246,6 +247,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     }
 
     final categoryName = _findCategoryName(periodId, categoryId);
+    var notificationPermissionDenied = false;
     try {
       await ref
           .read(transactionActionProvider.notifier)
@@ -260,7 +262,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
           );
 
       if (_saveAsTemplate || _saveAsRecurring) {
-        await ref
+        final permissionGranted = await ref
             .read(transactionTemplateActionProvider.notifier)
             .save(
               type: TransactionType.expense,
@@ -270,6 +272,7 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
               dayOfMonth: _saveAsRecurring ? _date.day : null,
               activeFromDate: _date,
             );
+        notificationPermissionDenied = permissionGranted == false;
       }
     } on StateError catch (error) {
       if (!mounted) return;
@@ -278,7 +281,23 @@ class _AddExpenseScreenState extends ConsumerState<AddExpenseScreen> {
     }
 
     if (mounted) {
-      AppToast.show(context, context.tr('expense_recorded_successfully'));
+      final notificationService = notificationPermissionDenied
+          ? ref.read(recurringNotificationServiceProvider)
+          : null;
+      AppToast.show(
+        context,
+        context.tr(
+          notificationPermissionDenied
+              ? 'expense_recorded_notification_not_allowed'
+              : 'expense_recorded_successfully',
+        ),
+        actionLabel: notificationPermissionDenied
+            ? context.tr('open_settings')
+            : null,
+        onAction: notificationService == null
+            ? null
+            : () => notificationService.openNotificationSettings(),
+      );
       Navigator.pop(context);
     }
   }

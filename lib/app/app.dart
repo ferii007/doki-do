@@ -18,11 +18,36 @@ import 'router.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 
-class DokiDoApp extends ConsumerWidget {
+class DokiDoApp extends ConsumerStatefulWidget {
   const DokiDoApp({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<DokiDoApp> createState() => _DokiDoAppState();
+}
+
+class _DokiDoAppState extends ConsumerState<DokiDoApp>
+    with WidgetsBindingObserver {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addObserver(this);
+  }
+
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      ref.invalidate(recurringNotificationBootstrapProvider);
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     final settingsAsync = ref.watch(appSettingsProvider);
     ref.watch(recurringNotificationBootstrapProvider);
     final settings = settingsAsync.asData?.value;

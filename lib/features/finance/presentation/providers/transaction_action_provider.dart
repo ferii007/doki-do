@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/entities/budget_allocation_draft.dart';
@@ -8,6 +9,7 @@ import '../../domain/usecases/add_expense.dart';
 import '../../domain/usecases/add_income.dart';
 import 'current_budget_provider.dart';
 import 'finance_repository_provider.dart';
+import 'recurring_notification_provider.dart';
 import 'selected_period_provider.dart';
 import 'transaction_template_provider.dart';
 
@@ -45,6 +47,12 @@ class TransactionActionNotifier extends Notifier<bool> {
       ref.invalidate(allBudgetSnapshotsProvider);
       ref.invalidate(recurringOccurrencesProvider);
       ref.invalidate(recurringDueItemsProvider);
+      if (recurringTemplateId != null && recurringDueDate != null) {
+        await _completeRecurringNotification(
+          templateId: recurringTemplateId,
+          dueDate: recurringDueDate,
+        );
+      }
     } finally {
       state = false;
     }
@@ -100,6 +108,12 @@ class TransactionActionNotifier extends Notifier<bool> {
       ref.invalidate(allBudgetSnapshotsProvider);
       ref.invalidate(recurringOccurrencesProvider);
       ref.invalidate(recurringDueItemsProvider);
+      if (recurringTemplateId != null && recurringDueDate != null) {
+        await _completeRecurringNotification(
+          templateId: recurringTemplateId,
+          dueDate: recurringDueDate,
+        );
+      }
     } finally {
       state = false;
     }
@@ -308,5 +322,25 @@ class TransactionActionNotifier extends Notifier<bool> {
     ref.invalidate(budgetByPeriodProvider(periodId));
     ref.invalidate(budgetPeriodsProvider);
     ref.invalidate(allBudgetSnapshotsProvider);
+  }
+
+  Future<void> _completeRecurringNotification({
+    required String templateId,
+    required DateTime dueDate,
+  }) async {
+    try {
+      await ref
+          .read(recurringNotificationServiceProvider)
+          .cancelOccurrence(templateId: templateId, dueDate: dueDate);
+      await syncRecurringNotifications(ref);
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'recurring notifications',
+        ),
+      );
+    }
   }
 }

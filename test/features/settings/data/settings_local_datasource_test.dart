@@ -86,9 +86,27 @@ void main() {
       );
       final migratedJson =
           jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
-      expect(migratedJson['schema_version'], 1);
+      expect(migratedJson['schema_version'], 2);
+      expect(migratedJson['notification_permission_prompt_dismissed'], isFalse);
     },
   );
+
+  test('persists permanent notification prompt dismissal', () async {
+    final keyStore = MemoryEncryptionKeyStore();
+    final writer = SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    );
+    final settings = await writer.readSettings();
+    await writer.saveSettings(
+      settings.copyWith(notificationPermissionPromptDismissed: true),
+    );
+
+    final reloaded = await SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    ).readSettings();
+
+    expect(reloaded.notificationPermissionPromptDismissed, isTrue);
+  });
 }
 
 class _FakePathProviderPlatform extends PathProviderPlatform {

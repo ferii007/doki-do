@@ -10,6 +10,7 @@ import '../../../../core/widgets/app_toast.dart';
 import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../providers/current_budget_provider.dart';
+import '../providers/recurring_notification_provider.dart';
 import '../providers/selected_period_provider.dart';
 import '../providers/transaction_action_provider.dart';
 import '../providers/transaction_template_provider.dart';
@@ -200,6 +201,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
       return;
     }
 
+    var notificationPermissionDenied = false;
     try {
       await ref
           .read(transactionActionProvider.notifier)
@@ -213,7 +215,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
           );
 
       if (_saveAsTemplate || _saveAsRecurring) {
-        await ref
+        final permissionGranted = await ref
             .read(transactionTemplateActionProvider.notifier)
             .save(
               type: TransactionType.income,
@@ -222,6 +224,7 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
               dayOfMonth: _saveAsRecurring ? _date.day : null,
               activeFromDate: _date,
             );
+        notificationPermissionDenied = permissionGranted == false;
       }
     } on StateError catch (error) {
       if (!mounted) return;
@@ -230,7 +233,23 @@ class _AddIncomeScreenState extends ConsumerState<AddIncomeScreen> {
     }
 
     if (mounted) {
-      AppToast.show(context, context.tr('income_recorded_successfully'));
+      final notificationService = notificationPermissionDenied
+          ? ref.read(recurringNotificationServiceProvider)
+          : null;
+      AppToast.show(
+        context,
+        context.tr(
+          notificationPermissionDenied
+              ? 'income_recorded_notification_not_allowed'
+              : 'income_recorded_successfully',
+        ),
+        actionLabel: notificationPermissionDenied
+            ? context.tr('open_settings')
+            : null,
+        onAction: notificationService == null
+            ? null
+            : () => notificationService.openNotificationSettings(),
+      );
       Navigator.pop(context);
     }
   }

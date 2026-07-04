@@ -5,9 +5,17 @@ import 'package:flutter/material.dart';
 import '../../app/theme/app_colors.dart';
 
 class AppToast {
-  static void show(BuildContext context, String message) {
+  static void show(
+    BuildContext context,
+    String message, {
+    String? actionLabel,
+    VoidCallback? onAction,
+  }) {
+    assert(actionLabel == null || onAction != null);
     final overlay = Overlay.of(context, rootOverlay: true);
-    final entry = OverlayEntry(
+    late final OverlayEntry entry;
+    Timer? timer;
+    entry = OverlayEntry(
       builder: (context) => Positioned(
         left: 16,
         right: 16,
@@ -40,6 +48,27 @@ class AppToast {
                     ),
                   ),
                 ),
+                if (actionLabel != null) ...[
+                  const SizedBox(width: 8),
+                  TextButton(
+                    onPressed: () {
+                      timer?.cancel();
+                      if (entry.mounted) entry.remove();
+                      onAction?.call();
+                    },
+                    style: TextButton.styleFrom(
+                      foregroundColor: AppColors.secondary,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                    ),
+                    child: Text(
+                      actionLabel,
+                      style: const TextStyle(fontWeight: FontWeight.w900),
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -48,6 +77,8 @@ class AppToast {
     );
 
     overlay.insert(entry);
-    Timer(const Duration(seconds: 2), entry.remove);
+    timer = Timer(Duration(seconds: actionLabel == null ? 2 : 5), () {
+      if (entry.mounted) entry.remove();
+    });
   }
 }

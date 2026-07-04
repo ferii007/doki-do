@@ -11,6 +11,7 @@ import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/transaction_template.dart';
 import '../../domain/entities/transaction_type.dart';
+import '../providers/recurring_notification_provider.dart';
 import '../providers/transaction_template_provider.dart';
 import '../widgets/transaction_form/recurring_template_edit_sheet.dart';
 import '../widgets/transaction_type_icon.dart';
@@ -302,7 +303,7 @@ class _TemplateCard extends ConsumerWidget {
     );
     if (result == null || !context.mounted) return;
 
-    await ref
+    final permissionGranted = await ref
         .read(transactionTemplateActionProvider.notifier)
         .save(
           templateId: template.id,
@@ -319,7 +320,23 @@ class _TemplateCard extends ConsumerWidget {
           reminderMinute: result.reminderMinute,
         );
     if (!context.mounted) return;
-    AppToast.show(context, context.tr('recurring_transaction_updated'));
+    final notificationService = permissionGranted == false
+        ? ref.read(recurringNotificationServiceProvider)
+        : null;
+    AppToast.show(
+      context,
+      context.tr(
+        permissionGranted == false
+            ? 'recurring_updated_notification_not_allowed'
+            : 'recurring_transaction_updated',
+      ),
+      actionLabel: permissionGranted == false
+          ? context.tr('open_settings')
+          : null,
+      onAction: notificationService == null
+          ? null
+          : () => notificationService.openNotificationSettings(),
+    );
   }
 
   Future<void> _toggleActive(BuildContext context, WidgetRef ref) async {

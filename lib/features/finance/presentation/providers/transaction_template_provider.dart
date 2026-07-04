@@ -44,7 +44,7 @@ class TransactionTemplateActionNotifier extends Notifier<bool> {
   @override
   bool build() => false;
 
-  Future<void> save({
+  Future<bool?> save({
     String? templateId,
     required TransactionType type,
     required String title,
@@ -76,14 +76,12 @@ class TransactionTemplateActionNotifier extends Notifier<bool> {
         reminderMinute: reminderMinute,
       );
       _invalidateRecurring();
+      bool? permissionGranted;
       if (dayOfMonth != null && reminderEnabled) {
-        await _runNotificationTask(
-          () => ref
-              .read(recurringNotificationServiceProvider)
-              .requestPermission(),
-        );
+        permissionGranted = await _requestNotificationPermission();
       }
       await _runNotificationTask(() => syncRecurringNotifications(ref));
+      return permissionGranted;
     } finally {
       state = false;
     }
@@ -131,6 +129,11 @@ class TransactionTemplateActionNotifier extends Notifier<bool> {
           .read(financeRepositoryProvider)
           .skipRecurringOccurrence(templateId: templateId, dueDate: dueDate);
       _invalidateRecurring();
+      await _runNotificationTask(
+        () => ref
+            .read(recurringNotificationServiceProvider)
+            .cancelOccurrence(templateId: templateId, dueDate: dueDate),
+      );
       await _runNotificationTask(() => syncRecurringNotifications(ref));
     } finally {
       state = false;
@@ -154,6 +157,23 @@ class TransactionTemplateActionNotifier extends Notifier<bool> {
           library: 'recurring notifications',
         ),
       );
+    }
+  }
+
+  Future<bool?> _requestNotificationPermission() async {
+    try {
+      return await ref
+          .read(recurringNotificationServiceProvider)
+          .requestPermission();
+    } catch (error, stackTrace) {
+      FlutterError.reportError(
+        FlutterErrorDetails(
+          exception: error,
+          stack: stackTrace,
+          library: 'recurring notifications',
+        ),
+      );
+      return null;
     }
   }
 }

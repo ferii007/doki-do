@@ -36,4 +36,12 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
       settings.copyWith(hideFinancialAmounts: !settings.hideFinancialAmounts),
     );
   }
+
+  Future<void> dismissNotificationPermissionPrompt() async {
+    final settings = state.asData?.value;
+    if (settings == null || settings.notificationPermissionPromptDismissed) {
+      return;
+    }
+    await save(settings.copyWith(notificationPermissionPromptDismissed: true));
+  }
 }
