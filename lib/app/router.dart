@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+import '../features/backup/presentation/screens/local_backup_screen.dart';
 import '../features/finance/presentation/screens/add_category_screen.dart';
 import '../features/finance/presentation/screens/add_expense_screen.dart';
 import '../features/finance/presentation/screens/add_income_screen.dart';
@@ -21,6 +22,7 @@ class AppRouter {
   static const expenseDetail = '/expense-detail';
   static const transactionTemplates = '/transaction-templates';
   static const appLockSettings = '/app-lock-settings';
+  static const localBackup = '/local-backup';
 
   static Map<String, WidgetBuilder> get routes => {
     addIncome: (_) => const AddIncomeScreen(),
@@ -32,5 +34,6 @@ class AppRouter {
     expenseDetail: (_) => const ExpenseDetailScreen(),
     transactionTemplates: (_) => const TransactionTemplatesScreen(),
     appLockSettings: (_) => const AppLockSettingsScreen(),
+    localBackup: (_) => const LocalBackupScreen(),
   };
 }

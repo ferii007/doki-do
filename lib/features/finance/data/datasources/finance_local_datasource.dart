@@ -38,6 +38,19 @@ class FinanceLocalDatasource {
     return getBudgetByPeriodId(currentPeriodId);
   }
 
+  Future<Map<String, dynamic>> exportBackupData() async {
+    final database = await _readDatabase();
+    return jsonDecode(jsonEncode(database)) as Map<String, dynamic>;
+  }
+
+  Future<void> restoreBackupData(Map<String, dynamic> backupData) async {
+    final copy = jsonDecode(jsonEncode(backupData)) as Map<String, dynamic>;
+    final restored = _normalizeDatabase(_migrateDatabase(copy));
+    _validateDatabase(restored);
+    _database = restored;
+    await _saveDatabase();
+  }
+
   Future<List<Map<String, dynamic>>> getBudgetPeriods() async {
     await Future<void>.delayed(const Duration(milliseconds: 150));
 

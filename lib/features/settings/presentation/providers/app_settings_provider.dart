@@ -25,6 +25,13 @@ class AppSettingsNotifier extends AsyncNotifier<AppSettings> {
     await ref.read(settingsLocalDatasourceProvider).saveSettings(settings);
   }
 
+  Future<void> reload() async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(settingsLocalDatasourceProvider).readSettings(),
+    );
+  }
+
   Future<void> completeSetup(AppSettings settings) async {
     await save(settings.copyWith(hasCompletedSetup: true));
   }

@@ -86,11 +86,12 @@ void main() {
       );
       final migratedJson =
           jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
-      expect(migratedJson['schema_version'], 3);
+      expect(migratedJson['schema_version'], 4);
       expect(migratedJson['notification_permission_prompt_dismissed'], isFalse);
       expect(migratedJson['app_lock_enabled'], isFalse);
       expect(migratedJson['biometric_unlock_enabled'], isFalse);
       expect(migratedJson['app_lock_timeout'], 'immediately');
+      expect(migratedJson['backup_frequency'], 'off');
     },
   );
 
@@ -132,6 +133,31 @@ void main() {
     expect(reloaded.appLockEnabled, isTrue);
     expect(reloaded.biometricUnlockEnabled, isTrue);
     expect(reloaded.appLockTimeoutCode, 'after_30_minutes');
+  });
+
+  test('persists local backup preferences', () async {
+    final keyStore = MemoryEncryptionKeyStore();
+    final writer = SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    );
+    final settings = await writer.readSettings();
+    await writer.saveSettings(
+      settings.copyWith(
+        backupFolderUri: 'content://backup-folder',
+        backupFolderName: 'DokiDo Backup',
+        backupFrequencyCode: 'weekly',
+        lastBackupAt: '2026-07-02T10:00:00.000',
+      ),
+    );
+
+    final reloaded = await SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    ).readSettings();
+
+    expect(reloaded.backupFolderUri, 'content://backup-folder');
+    expect(reloaded.backupFolderName, 'DokiDo Backup');
+    expect(reloaded.backupFrequencyCode, 'weekly');
+    expect(reloaded.lastBackupAt, '2026-07-02T10:00:00.000');
   });
 }
 

@@ -8,6 +8,7 @@ import '../core/formatters/date_formatter.dart';
 import '../core/formatters/rupiah_formatter.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/widgets/error_view.dart';
+import '../features/backup/presentation/providers/backup_provider.dart';
 import '../features/finance/presentation/screens/dashboard_screen.dart';
 import '../features/finance/presentation/providers/recurring_notification_provider.dart';
 import '../features/security/presentation/providers/app_lock_provider.dart';
@@ -54,6 +55,7 @@ class _DokiDoAppState extends ConsumerState<DokiDoApp>
     }
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(recurringNotificationBootstrapProvider);
+      ref.invalidate(automaticBackupBootstrapProvider);
     }
   }
 
@@ -61,6 +63,7 @@ class _DokiDoAppState extends ConsumerState<DokiDoApp>
   Widget build(BuildContext context) {
     final settingsAsync = ref.watch(appSettingsProvider);
     ref.watch(recurringNotificationBootstrapProvider);
+    ref.watch(automaticBackupBootstrapProvider);
     final settings = settingsAsync.asData?.value;
     final language = settings?.language ?? AppLanguage.id;
     FinancialPrivacyPreference.hideAmounts =

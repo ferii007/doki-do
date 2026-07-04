@@ -81,6 +81,22 @@ class SettingsTabBody extends ConsumerWidget {
               ),
             ],
           ),
+          const SizedBox(height: 14),
+          _SettingsSection(
+            title: context.tr('data_and_storage'),
+            children: [
+              _SettingsOptionRow(
+                icon: Icons.backup_rounded,
+                label: context.tr('local_backup'),
+                value: value.backupFolderName == null
+                    ? context.tr('backup_not_configured')
+                    : context.tr(value.backupFrequency.labelKey),
+                showDivider: false,
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRouter.localBackup),
+              ),
+            ],
+          ),
           const SizedBox(height: 18),
           Center(
             child: Text(

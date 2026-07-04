@@ -11,7 +11,7 @@ import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_settings.dart';
 
 class SettingsLocalDatasource {
-  static const _schemaVersion = 3;
+  static const _schemaVersion = 4;
   static const _storageFileName = 'doki_do_settings.json';
   static const _encryptionScope = 'settings';
 
@@ -88,6 +88,10 @@ class SettingsLocalDatasource {
           settings['app_lock_timeout'] ??= 'immediately';
           settings['schema_version'] = 3;
           version = 3;
+        case 3:
+          settings['backup_frequency'] ??= 'off';
+          settings['schema_version'] = 4;
+          version = 4;
         default:
           throw FormatException(
             'No settings migration exists from schema version $version.',
@@ -99,6 +103,42 @@ class SettingsLocalDatasource {
   Future<void> saveSettings(AppSettings settings) async {
     _cache = settings;
     await _saveSettings(settings);
+  }
+
+  Future<Map<String, dynamic>> exportBackupData() async {
+    final settings = await readSettings();
+    return {
+      'has_completed_setup': settings.hasCompletedSetup,
+      'display_name': settings.displayName,
+      'email': settings.email,
+      'user_type': settings.userType,
+      'theme_id': settings.themeId,
+      'language_code': settings.languageCode,
+      'currency_code': settings.currencyCode,
+      'hide_financial_amounts': settings.hideFinancialAmounts,
+    };
+  }
+
+  Future<AppSettings> restoreBackupData(Map<String, dynamic> backupData) async {
+    final current = await readSettings();
+    final restored = current.copyWith(
+      hasCompletedSetup:
+          backupData['has_completed_setup'] as bool? ??
+          current.hasCompletedSetup,
+      displayName: backupData['display_name'] as String? ?? current.displayName,
+      email: backupData['email'] as String? ?? current.email,
+      userType: backupData['user_type'] as String? ?? current.userType,
+      themeId: backupData['theme_id'] as String? ?? current.themeId,
+      languageCode:
+          backupData['language_code'] as String? ?? current.languageCode,
+      currencyCode:
+          backupData['currency_code'] as String? ?? current.currencyCode,
+      hideFinancialAmounts:
+          backupData['hide_financial_amounts'] as bool? ??
+          current.hideFinancialAmounts,
+    );
+    await saveSettings(restored);
+    return restored;
   }
 
   Future<void> _saveSettings(

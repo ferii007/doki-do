@@ -1,5 +1,6 @@
 import '../../../../app/theme/app_theme_palette.dart';
 import 'app_lock_timeout.dart';
+import 'backup_frequency.dart';
 import 'app_currency.dart';
 import 'app_language.dart';
 
@@ -16,6 +17,10 @@ class AppSettings {
   final bool appLockEnabled;
   final bool biometricUnlockEnabled;
   final String appLockTimeoutCode;
+  final String? backupFolderUri;
+  final String? backupFolderName;
+  final String backupFrequencyCode;
+  final String? lastBackupAt;
 
   const AppSettings({
     required this.hasCompletedSetup,
@@ -30,6 +35,10 @@ class AppSettings {
     required this.appLockEnabled,
     required this.biometricUnlockEnabled,
     required this.appLockTimeoutCode,
+    required this.backupFolderUri,
+    required this.backupFolderName,
+    required this.backupFrequencyCode,
+    required this.lastBackupAt,
   });
 
   factory AppSettings.defaults() {
@@ -46,6 +55,10 @@ class AppSettings {
       appLockEnabled: false,
       biometricUnlockEnabled: false,
       appLockTimeoutCode: 'immediately',
+      backupFolderUri: null,
+      backupFolderName: null,
+      backupFrequencyCode: 'off',
+      lastBackupAt: null,
     );
   }
 
@@ -73,6 +86,11 @@ class AppSettings {
           defaults.biometricUnlockEnabled,
       appLockTimeoutCode:
           json['app_lock_timeout'] as String? ?? defaults.appLockTimeoutCode,
+      backupFolderUri: json['backup_folder_uri'] as String?,
+      backupFolderName: json['backup_folder_name'] as String?,
+      backupFrequencyCode:
+          json['backup_frequency'] as String? ?? defaults.backupFrequencyCode,
+      lastBackupAt: json['last_backup_at'] as String?,
     );
   }
 
@@ -91,6 +109,10 @@ class AppSettings {
       'app_lock_enabled': appLockEnabled,
       'biometric_unlock_enabled': biometricUnlockEnabled,
       'app_lock_timeout': appLockTimeoutCode,
+      'backup_folder_uri': backupFolderUri,
+      'backup_folder_name': backupFolderName,
+      'backup_frequency': backupFrequencyCode,
+      'last_backup_at': lastBackupAt,
     };
   }
 
@@ -99,6 +121,10 @@ class AppSettings {
   AppCurrency get currency => AppCurrency.byCode(currencyCode);
   AppLockTimeout get appLockTimeout =>
       AppLockTimeout.byCode(appLockTimeoutCode);
+  BackupFrequency get backupFrequency =>
+      BackupFrequency.byCode(backupFrequencyCode);
+  DateTime? get lastBackupDateTime =>
+      lastBackupAt == null ? null : DateTime.tryParse(lastBackupAt!);
 
   AppSettings copyWith({
     bool? hasCompletedSetup,
@@ -113,6 +139,13 @@ class AppSettings {
     bool? appLockEnabled,
     bool? biometricUnlockEnabled,
     String? appLockTimeoutCode,
+    String? backupFolderUri,
+    bool clearBackupFolderUri = false,
+    String? backupFolderName,
+    bool clearBackupFolderName = false,
+    String? backupFrequencyCode,
+    String? lastBackupAt,
+    bool clearLastBackupAt = false,
   }) {
     return AppSettings(
       hasCompletedSetup: hasCompletedSetup ?? this.hasCompletedSetup,
@@ -130,6 +163,16 @@ class AppSettings {
       biometricUnlockEnabled:
           biometricUnlockEnabled ?? this.biometricUnlockEnabled,
       appLockTimeoutCode: appLockTimeoutCode ?? this.appLockTimeoutCode,
+      backupFolderUri: clearBackupFolderUri
+          ? null
+          : backupFolderUri ?? this.backupFolderUri,
+      backupFolderName: clearBackupFolderName
+          ? null
+          : backupFolderName ?? this.backupFolderName,
+      backupFrequencyCode: backupFrequencyCode ?? this.backupFrequencyCode,
+      lastBackupAt: clearLastBackupAt
+          ? null
+          : lastBackupAt ?? this.lastBackupAt,
     );
   }
 }
