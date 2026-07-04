@@ -30,6 +30,24 @@ class SettingsTabBody extends ConsumerWidget {
           _AccountProfileCard(settings: value),
           const SizedBox(height: 14),
           _SettingsSection(
+            title: context.tr('security'),
+            children: [
+              _SettingsOptionRow(
+                icon: Icons.lock_rounded,
+                label: context.tr('app_lock'),
+                value: context.tr(
+                  value.appLockEnabled
+                      ? 'app_lock_active'
+                      : 'app_lock_inactive',
+                ),
+                showDivider: false,
+                onTap: () =>
+                    Navigator.pushNamed(context, AppRouter.appLockSettings),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          _SettingsSection(
             title: context.tr('app_preferences'),
             children: [
               _SettingsOptionRow(

@@ -86,8 +86,11 @@ void main() {
       );
       final migratedJson =
           jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
-      expect(migratedJson['schema_version'], 2);
+      expect(migratedJson['schema_version'], 3);
       expect(migratedJson['notification_permission_prompt_dismissed'], isFalse);
+      expect(migratedJson['app_lock_enabled'], isFalse);
+      expect(migratedJson['biometric_unlock_enabled'], isFalse);
+      expect(migratedJson['app_lock_timeout'], 'immediately');
     },
   );
 
@@ -106,6 +109,29 @@ void main() {
     ).readSettings();
 
     expect(reloaded.notificationPermissionPromptDismissed, isTrue);
+  });
+
+  test('persists App Lock preferences', () async {
+    final keyStore = MemoryEncryptionKeyStore();
+    final writer = SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    );
+    final settings = await writer.readSettings();
+    await writer.saveSettings(
+      settings.copyWith(
+        appLockEnabled: true,
+        biometricUnlockEnabled: true,
+        appLockTimeoutCode: 'after_30_minutes',
+      ),
+    );
+
+    final reloaded = await SettingsLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: keyStore),
+    ).readSettings();
+
+    expect(reloaded.appLockEnabled, isTrue);
+    expect(reloaded.biometricUnlockEnabled, isTrue);
+    expect(reloaded.appLockTimeoutCode, 'after_30_minutes');
   });
 }
 

@@ -1,4 +1,5 @@
 import '../../../../app/theme/app_theme_palette.dart';
+import 'app_lock_timeout.dart';
 import 'app_currency.dart';
 import 'app_language.dart';
 
@@ -12,6 +13,9 @@ class AppSettings {
   final String currencyCode;
   final bool hideFinancialAmounts;
   final bool notificationPermissionPromptDismissed;
+  final bool appLockEnabled;
+  final bool biometricUnlockEnabled;
+  final String appLockTimeoutCode;
 
   const AppSettings({
     required this.hasCompletedSetup,
@@ -23,6 +27,9 @@ class AppSettings {
     required this.currencyCode,
     required this.hideFinancialAmounts,
     required this.notificationPermissionPromptDismissed,
+    required this.appLockEnabled,
+    required this.biometricUnlockEnabled,
+    required this.appLockTimeoutCode,
   });
 
   factory AppSettings.defaults() {
@@ -36,6 +43,9 @@ class AppSettings {
       currencyCode: 'IDR',
       hideFinancialAmounts: false,
       notificationPermissionPromptDismissed: false,
+      appLockEnabled: false,
+      biometricUnlockEnabled: false,
+      appLockTimeoutCode: 'immediately',
     );
   }
 
@@ -56,6 +66,13 @@ class AppSettings {
       notificationPermissionPromptDismissed:
           json['notification_permission_prompt_dismissed'] as bool? ??
           defaults.notificationPermissionPromptDismissed,
+      appLockEnabled:
+          json['app_lock_enabled'] as bool? ?? defaults.appLockEnabled,
+      biometricUnlockEnabled:
+          json['biometric_unlock_enabled'] as bool? ??
+          defaults.biometricUnlockEnabled,
+      appLockTimeoutCode:
+          json['app_lock_timeout'] as String? ?? defaults.appLockTimeoutCode,
     );
   }
 
@@ -71,12 +88,17 @@ class AppSettings {
       'hide_financial_amounts': hideFinancialAmounts,
       'notification_permission_prompt_dismissed':
           notificationPermissionPromptDismissed,
+      'app_lock_enabled': appLockEnabled,
+      'biometric_unlock_enabled': biometricUnlockEnabled,
+      'app_lock_timeout': appLockTimeoutCode,
     };
   }
 
   AppThemePalette get themePalette => AppThemePalettes.byId(themeId);
   AppLanguage get language => AppLanguage.byCode(languageCode);
   AppCurrency get currency => AppCurrency.byCode(currencyCode);
+  AppLockTimeout get appLockTimeout =>
+      AppLockTimeout.byCode(appLockTimeoutCode);
 
   AppSettings copyWith({
     bool? hasCompletedSetup,
@@ -88,6 +110,9 @@ class AppSettings {
     String? currencyCode,
     bool? hideFinancialAmounts,
     bool? notificationPermissionPromptDismissed,
+    bool? appLockEnabled,
+    bool? biometricUnlockEnabled,
+    String? appLockTimeoutCode,
   }) {
     return AppSettings(
       hasCompletedSetup: hasCompletedSetup ?? this.hasCompletedSetup,
@@ -101,6 +126,10 @@ class AppSettings {
       notificationPermissionPromptDismissed:
           notificationPermissionPromptDismissed ??
           this.notificationPermissionPromptDismissed,
+      appLockEnabled: appLockEnabled ?? this.appLockEnabled,
+      biometricUnlockEnabled:
+          biometricUnlockEnabled ?? this.biometricUnlockEnabled,
+      appLockTimeoutCode: appLockTimeoutCode ?? this.appLockTimeoutCode,
     );
   }
 }

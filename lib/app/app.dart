@@ -10,6 +10,8 @@ import '../core/localization/app_localizations.dart';
 import '../core/widgets/error_view.dart';
 import '../features/finance/presentation/screens/dashboard_screen.dart';
 import '../features/finance/presentation/providers/recurring_notification_provider.dart';
+import '../features/security/presentation/providers/app_lock_provider.dart';
+import '../features/security/presentation/widgets/app_lock_gate.dart';
 import '../features/settings/domain/entities/app_settings.dart';
 import '../features/settings/domain/entities/app_language.dart';
 import '../features/settings/presentation/providers/app_settings_provider.dart';
@@ -41,6 +43,15 @@ class _DokiDoAppState extends ConsumerState<DokiDoApp>
 
   @override
   void didChangeAppLifecycleState(AppLifecycleState state) {
+    final settings = ref.read(appSettingsProvider).asData?.value;
+    if (settings != null && settings.appLockEnabled) {
+      final appLock = ref.read(appLockSessionProvider.notifier);
+      if (state == AppLifecycleState.paused) {
+        appLock.onBackground(timeout: settings.appLockTimeout);
+      } else if (state == AppLifecycleState.resumed) {
+        appLock.onResumed(timeout: settings.appLockTimeout);
+      }
+    }
     if (state == AppLifecycleState.resumed) {
       ref.invalidate(recurringNotificationBootstrapProvider);
     }
@@ -74,7 +85,7 @@ class _DokiDoAppState extends ConsumerState<DokiDoApp>
       routes: AppRouter.routes,
       builder: (context, child) => AppLocalizationsScope(
         localizations: AppLocalizations(language),
-        child: child ?? const SizedBox.shrink(),
+        child: AppLockGate(child: child ?? const SizedBox.shrink()),
       ),
       home: AppLocalizationsScope(
         localizations: AppLocalizations(language),

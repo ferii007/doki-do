@@ -32,5 +32,6 @@ Future<void> syncRecurringNotifications(Ref ref) async {
     templates: templates,
     occurrences: occurrences,
     language: settings.language,
+    hideTransactionDetails: settings.appLockEnabled,
   );
 }

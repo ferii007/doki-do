@@ -152,6 +152,7 @@ class RecurringNotificationService {
     required List<TransactionTemplate> templates,
     required List<RecurringOccurrence> occurrences,
     required AppLanguage language,
+    required bool hideTransactionDetails,
     DateTime? now,
   }) async {
     await initialize();
@@ -170,9 +171,11 @@ class RecurringNotificationService {
       await _plugin.zonedSchedule(
         _notificationId(schedule.template.id, schedule.dueDate),
         localizations.tr('recurring_notification_title'),
-        localizations.trf('recurring_notification_body', {
-          'title': schedule.template.title,
-        }),
+        hideTransactionDetails
+            ? localizations.tr('recurring_notification_private_body')
+            : localizations.trf('recurring_notification_body', {
+                'title': schedule.template.title,
+              }),
         tz.TZDateTime.from(schedule.scheduledAt, tz.local),
         NotificationDetails(
           android: AndroidNotificationDetails(

@@ -8,6 +8,7 @@ import '../features/finance/presentation/screens/category_detail_screen.dart';
 import '../features/finance/presentation/screens/expense_detail_screen.dart';
 import '../features/finance/presentation/screens/income_detail_screen.dart';
 import '../features/finance/presentation/screens/transaction_templates_screen.dart';
+import '../features/security/presentation/screens/app_lock_settings_screen.dart';
 
 class AppRouter {
   static const dashboard = '/';
@@ -19,6 +20,7 @@ class AppRouter {
   static const incomeDetail = '/income-detail';
   static const expenseDetail = '/expense-detail';
   static const transactionTemplates = '/transaction-templates';
+  static const appLockSettings = '/app-lock-settings';
 
   static Map<String, WidgetBuilder> get routes => {
     addIncome: (_) => const AddIncomeScreen(),
@@ -29,5 +31,6 @@ class AppRouter {
     incomeDetail: (_) => const IncomeDetailScreen(),
     expenseDetail: (_) => const ExpenseDetailScreen(),
     transactionTemplates: (_) => const TransactionTemplatesScreen(),
+    appLockSettings: (_) => const AppLockSettingsScreen(),
   };
 }

@@ -293,6 +293,8 @@ const _id = <String, String>{
   'recurring_notification_title': 'Waktunya Mencatat Transaksi',
   'recurring_notification_body':
       '"{title}" sudah jatuh tempo. Buka DokiDo untuk memeriksa dan mencatatnya.',
+  'recurring_notification_private_body':
+      'Ada transaksi berulang yang perlu diperiksa dan dicatat.',
   'recurring_notification_channel': 'Transaksi Berulang',
   'recurring_notification_channel_description':
       'Pengingat untuk draf uang masuk dan uang keluar berulang.',
@@ -308,6 +310,77 @@ const _id = <String, String>{
       'Uang keluar dan pengingat tersimpan, tetapi notifikasi belum diizinkan.',
   'recurring_updated_notification_not_allowed':
       'Perubahan tersimpan, tetapi notifikasi belum diizinkan.',
+  'security': 'Keamanan',
+  'app_lock': 'Kunci Aplikasi',
+  'app_lock_active': 'Kunci Aplikasi Aktif',
+  'app_lock_inactive': 'Kunci Aplikasi Nonaktif',
+  'app_lock_active_description':
+      'DokiDo meminta autentikasi sebelum menampilkan data keuangan.',
+  'app_lock_inactive_description':
+      'Data keuangan dapat dibuka tanpa PIN aplikasi.',
+  'enable_app_lock': 'Aktifkan Kunci Aplikasi',
+  'enable_app_lock_description':
+      'Gunakan PIN 6 digit dan biometrik perangkat untuk melindungi akses ke DokiDo.',
+  'create_app_lock_pin': 'Buat PIN Aplikasi',
+  'create_app_lock_pin_description':
+      'Masukkan 6 digit yang mudah Anda ingat tetapi sulit ditebak.',
+  'confirm_app_lock_pin': 'Konfirmasi PIN',
+  'confirm_app_lock_pin_description': 'Masukkan kembali PIN yang baru dibuat.',
+  'pin_does_not_match': 'PIN tidak sama. Coba lagi.',
+  'unlock_dokido': 'Buka DokiDo',
+  'enter_app_lock_pin': 'Masukkan PIN aplikasi untuk melanjutkan.',
+  'incorrect_pin': 'PIN salah.',
+  'try_again_in_seconds': 'Coba lagi dalam {seconds} detik.',
+  'forgot_pin': 'Lupa PIN?',
+  'biometric_unlock_reason': 'Gunakan biometrik untuk membuka DokiDo.',
+  'recover_pin_reason':
+      'Konfirmasi identitas perangkat untuk membuat PIN DokiDo baru.',
+  'device_auth_unavailable':
+      'Autentikasi perangkat belum tersedia atau belum disiapkan.',
+  'device_auth_locked':
+      'Autentikasi perangkat terkunci sementara. Coba kembali nanti.',
+  'authentication_failed': 'Autentikasi tidak berhasil.',
+  'create_new_app_lock_pin': 'Buat PIN Baru',
+  'create_new_app_lock_pin_description':
+      'PIN lama akan diganti setelah PIN baru dikonfirmasi.',
+  'recovered_pin_description':
+      'Identitas berhasil dikonfirmasi. Buat PIN DokiDo yang baru.',
+  'verify_app_lock_pin': 'Verifikasi PIN',
+  'verify_it_is_you': 'Konfirmasi Identitas',
+  'verify_pin_description':
+      'Masukkan PIN aplikasi untuk melanjutkan perubahan keamanan.',
+  'verifying': 'Memverifikasi...',
+  'biometric_unlock': 'Buka Dengan Biometrik',
+  'biometric_unlock_enabled': 'Biometrik aktif.',
+  'biometric_unlock_disabled': 'Biometrik nonaktif.',
+  'automatic_lock': 'Kunci Otomatis',
+  'lock_immediately': 'Segera',
+  'lock_after_1_minute': 'Setelah 1 Menit',
+  'lock_after_30_minutes': 'Setelah 30 Menit',
+  'change_pin': 'Ubah PIN',
+  'change_pin_description': 'Ganti PIN aplikasi yang digunakan saat ini.',
+  'lock_now': 'Kunci Sekarang',
+  'lock_now_description': 'Tutup halaman ini dan langsung kunci DokiDo.',
+  'disable_app_lock': 'Nonaktifkan Kunci Aplikasi',
+  'disable_app_lock_description':
+      'Hapus perlindungan PIN dan biometrik dari DokiDo.',
+  'disable_app_lock_confirmation': 'Nonaktifkan Kunci Aplikasi?',
+  'disable_app_lock_confirmation_description':
+      'DokiDo dapat dibuka tanpa PIN atau biometrik setelah dinonaktifkan.',
+  'disable': 'Nonaktifkan',
+  'enable': 'Aktifkan',
+  'app_lock_enabled_successfully': 'Kunci aplikasi berhasil diaktifkan.',
+  'app_lock_disabled_successfully': 'Kunci aplikasi berhasil dinonaktifkan.',
+  'pin_changed_successfully': 'PIN aplikasi berhasil diubah.',
+  'biometric_not_available':
+      'Biometrik belum tersedia atau belum didaftarkan di perangkat.',
+  'enable_biometric_unlock': 'Aktifkan Biometrik?',
+  'enable_biometric_unlock_description':
+      'Gunakan sidik jari atau pengenalan wajah untuk membuka DokiDo lebih cepat.',
+  'enable_biometric_reason':
+      'Konfirmasi biometrik untuk mengaktifkan buka kunci DokiDo.',
+  'verify_security_change_reason':
+      'Konfirmasi biometrik untuk mengubah keamanan DokiDo.',
   'error_recurring_template_not_found':
       'Jadwal transaksi berulang sudah tidak tersedia.',
   'error_recurring_occurrence_already_processed':
@@ -903,6 +976,8 @@ const _en = <String, String>{
   'recurring_notification_title': 'Time To Record A Transaction',
   'recurring_notification_body':
       '"{title}" is due. Open DokiDo to review and record it.',
+  'recurring_notification_private_body':
+      'A recurring transaction needs to be reviewed and recorded.',
   'recurring_notification_channel': 'Recurring Transactions',
   'recurring_notification_channel_description':
       'Reminders for recurring income and expense drafts.',
@@ -918,6 +993,77 @@ const _en = <String, String>{
       'The expense and reminder were saved, but notifications are not allowed.',
   'recurring_updated_notification_not_allowed':
       'Changes were saved, but notifications are not allowed.',
+  'security': 'Security',
+  'app_lock': 'App Lock',
+  'app_lock_active': 'App Lock Active',
+  'app_lock_inactive': 'App Lock Inactive',
+  'app_lock_active_description':
+      'DokiDo requires authentication before showing financial data.',
+  'app_lock_inactive_description':
+      'Financial data can be opened without an app PIN.',
+  'enable_app_lock': 'Enable App Lock',
+  'enable_app_lock_description':
+      'Use a 6-digit PIN and device biometrics to protect access to DokiDo.',
+  'create_app_lock_pin': 'Create App PIN',
+  'create_app_lock_pin_description':
+      'Enter 6 digits that are easy for you to remember but difficult to guess.',
+  'confirm_app_lock_pin': 'Confirm PIN',
+  'confirm_app_lock_pin_description': 'Enter the new PIN again.',
+  'pin_does_not_match': 'PINs do not match. Try again.',
+  'unlock_dokido': 'Unlock DokiDo',
+  'enter_app_lock_pin': 'Enter the app PIN to continue.',
+  'incorrect_pin': 'Incorrect PIN.',
+  'try_again_in_seconds': 'Try again in {seconds} seconds.',
+  'forgot_pin': 'Forgot PIN?',
+  'biometric_unlock_reason': 'Use biometrics to unlock DokiDo.',
+  'recover_pin_reason':
+      'Confirm your device identity to create a new DokiDo PIN.',
+  'device_auth_unavailable':
+      'Device authentication is unavailable or has not been configured.',
+  'device_auth_locked':
+      'Device authentication is temporarily locked. Try again later.',
+  'authentication_failed': 'Authentication was unsuccessful.',
+  'create_new_app_lock_pin': 'Create New PIN',
+  'create_new_app_lock_pin_description':
+      'The current PIN will be replaced after confirming the new PIN.',
+  'recovered_pin_description':
+      'Your identity was confirmed. Create a new DokiDo PIN.',
+  'verify_app_lock_pin': 'Verify PIN',
+  'verify_it_is_you': 'Confirm Your Identity',
+  'verify_pin_description':
+      'Enter the app PIN to continue changing security settings.',
+  'verifying': 'Verifying...',
+  'biometric_unlock': 'Unlock With Biometrics',
+  'biometric_unlock_enabled': 'Biometric unlock enabled.',
+  'biometric_unlock_disabled': 'Biometric unlock disabled.',
+  'automatic_lock': 'Automatic Lock',
+  'lock_immediately': 'Immediately',
+  'lock_after_1_minute': 'After 1 Minute',
+  'lock_after_30_minutes': 'After 30 Minutes',
+  'change_pin': 'Change PIN',
+  'change_pin_description': 'Replace the current app PIN.',
+  'lock_now': 'Lock Now',
+  'lock_now_description': 'Close this page and lock DokiDo immediately.',
+  'disable_app_lock': 'Disable App Lock',
+  'disable_app_lock_description':
+      'Remove PIN and biometric protection from DokiDo.',
+  'disable_app_lock_confirmation': 'Disable App Lock?',
+  'disable_app_lock_confirmation_description':
+      'DokiDo can be opened without a PIN or biometrics after disabling it.',
+  'disable': 'Disable',
+  'enable': 'Enable',
+  'app_lock_enabled_successfully': 'App Lock enabled successfully.',
+  'app_lock_disabled_successfully': 'App Lock disabled successfully.',
+  'pin_changed_successfully': 'App PIN changed successfully.',
+  'biometric_not_available':
+      'Biometrics are unavailable or not enrolled on this device.',
+  'enable_biometric_unlock': 'Enable Biometrics?',
+  'enable_biometric_unlock_description':
+      'Use fingerprint or face recognition to unlock DokiDo faster.',
+  'enable_biometric_reason':
+      'Confirm biometrics to enable DokiDo biometric unlock.',
+  'verify_security_change_reason':
+      'Confirm biometrics to change DokiDo security.',
   'error_recurring_template_not_found':
       'The recurring transaction schedule is no longer available.',
   'error_recurring_occurrence_already_processed':
