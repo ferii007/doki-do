@@ -4,6 +4,7 @@ import 'dart:typed_data';
 
 import 'package:cryptography/cryptography.dart';
 
+import '../../../core/app_info/app_identity.dart';
 import '../data/backup_credential_store.dart';
 import 'backup_archive.dart';
 
@@ -226,6 +227,7 @@ class BackupArchiveCodec {
     return difference == 0;
   }
 
-  List<int> get _additionalData =>
-      utf8.encode('DokiDo:portable-backup:v$_envelopeVersion');
+  List<int> get _additionalData => utf8.encode(
+    '${AppIdentity.storageProtocolId}:portable-backup:v$_envelopeVersion',
+  );
 }

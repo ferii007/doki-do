@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'dart:io';
 
+import 'package:doki_do/core/app_info/app_identity.dart';
 import 'package:doki_do/core/security/encrypted_storage.dart';
 import 'package:doki_do/features/settings/data/datasources/settings_local_datasource.dart';
 import 'package:flutter_test/flutter_test.dart';
@@ -58,7 +59,7 @@ void main() {
         jsonEncode({
           'has_completed_setup': true,
           'display_name': 'Feri',
-          'email': 'feri@dokido.local',
+          'email': AppIdentity.legacyDeveloperEmail,
           'user_type': 'flexible_financial_period_user',
           'theme_id': 'teal_balance',
           'language_code': 'en',
@@ -79,14 +80,18 @@ void main() {
 
       final migratedContent = await file.readAsString();
       expect(migratedContent, contains('"format":"dokido-aes-gcm"'));
-      expect(migratedContent, isNot(contains('feri@dokido.local')));
+      expect(
+        migratedContent,
+        isNot(contains(AppIdentity.legacyDeveloperEmail)),
+      );
       final decrypted = await storage.decrypt(
         migratedContent,
         scope: 'settings',
       );
       final migratedJson =
           jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
-      expect(migratedJson['schema_version'], 5);
+      expect(migratedJson['schema_version'], 6);
+      expect(migratedJson['email'], AppIdentity.developerEmail);
       expect(migratedJson['notification_permission_prompt_dismissed'], isFalse);
       expect(migratedJson['app_lock_enabled'], isFalse);
       expect(migratedJson['biometric_unlock_enabled'], isFalse);
@@ -145,7 +150,7 @@ void main() {
     await writer.saveSettings(
       settings.copyWith(
         backupFolderUri: 'content://backup-folder',
-        backupFolderName: 'DokiDo Backup',
+        backupFolderName: '${AppIdentity.appName} Backup',
         backupFrequencyCode: 'weekly',
         lastBackupAt: '2026-07-02T10:00:00.000',
       ),
@@ -156,7 +161,7 @@ void main() {
     ).readSettings();
 
     expect(reloaded.backupFolderUri, 'content://backup-folder');
-    expect(reloaded.backupFolderName, 'DokiDo Backup');
+    expect(reloaded.backupFolderName, '${AppIdentity.appName} Backup');
     expect(reloaded.backupFrequencyCode, 'weekly');
     expect(reloaded.lastBackupAt, '2026-07-02T10:00:00.000');
   });

@@ -82,7 +82,7 @@ class ProfileTabBody extends ConsumerWidget {
               const SizedBox(height: 18),
               Center(
                 child: Text(
-                  context.tr('powered_by_niskala'),
+                  context.tr('powered_by_developer'),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: AppColors.textSecondary.withValues(alpha: 0.72),
                     fontWeight: FontWeight.w700,
@@ -272,13 +272,14 @@ class _ProfileSummaryGrid extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GridView(
+      key: const ValueKey('profile-summary-grid'),
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
       gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
         crossAxisCount: 2,
         crossAxisSpacing: 10,
         mainAxisSpacing: 10,
-        childAspectRatio: 1.48,
+        childAspectRatio: 1.98,
       ),
       children: [
         _ProfileMetricCard(
@@ -294,13 +295,13 @@ class _ProfileSummaryGrid extends StatelessWidget {
           tint: AppColors.secondary,
         ),
         _ProfileAmountMetricCard(
-          leading: const TransactionTypeIcon(isIncome: true, size: 34),
+          leading: const TransactionTypeIcon(isIncome: true, size: 30),
           label: context.tr('income'),
           amount: totalIncome,
           tint: AppColors.success,
         ),
         _ProfileAmountMetricCard(
-          leading: const TransactionTypeIcon(isIncome: false, size: 34),
+          leading: const TransactionTypeIcon(isIncome: false, size: 30),
           label: context.tr('expense'),
           amount: totalExpense,
           tint: AppColors.danger,
@@ -326,7 +327,7 @@ class _ProfileMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -338,7 +339,7 @@ class _ProfileMetricCard extends StatelessWidget {
           Row(
             children: [
               _MetricIcon(icon: icon, tint: tint),
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
               Expanded(
                 child: Text(
                   label,
@@ -383,7 +384,7 @@ class _ProfileAmountMetricCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(10),
       decoration: BoxDecoration(
         color: AppColors.surface,
         borderRadius: BorderRadius.circular(16),
@@ -395,7 +396,7 @@ class _ProfileAmountMetricCard extends StatelessWidget {
           Row(
             children: [
               leading,
-              const SizedBox(width: 8),
+              const SizedBox(width: 7),
               Expanded(
                 child: Text(
                   label,
@@ -451,7 +452,7 @@ class _ProfileDataActionsCard extends StatelessWidget {
             child: _ProfileDataAction(
               icon: Icons.file_download_outlined,
               label: context.tr('export_report'),
-              onTap: () => _showUnavailableToast(context),
+              onTap: () => Navigator.pushNamed(context, AppRouter.exportReport),
             ),
           ),
           const AppInlineDivider(height: 42, horizontalMargin: 6),
@@ -532,13 +533,13 @@ class _MetricIcon extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      width: 34,
-      height: 34,
+      width: 30,
+      height: 30,
       decoration: BoxDecoration(
         color: tint.withValues(alpha: 0.12),
         borderRadius: BorderRadius.circular(10),
       ),
-      child: Icon(icon, color: tint, size: 19),
+      child: Icon(icon, color: tint, size: 17),
     );
   }
 }

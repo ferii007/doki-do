@@ -15,6 +15,8 @@ import io.flutter.plugin.common.MethodChannel
 class MainActivity : FlutterFragmentActivity() {
     private var directoryPickerResult: MethodChannel.Result? = null
     private var backupFilePickerResult: MethodChannel.Result? = null
+    private var reportFilePickerResult: MethodChannel.Result? = null
+    private var pendingReportContent: String? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -96,6 +98,24 @@ class MainActivity : FlutterFragmentActivity() {
                 else -> result.notImplemented()
             }
         }
+
+        MethodChannel(
+            flutterEngine.dartExecutor.binaryMessenger,
+            REPORT_CHANNEL,
+        ).setMethodCallHandler { call, result ->
+            if (call.method != "saveReport") {
+                result.notImplemented()
+                return@setMethodCallHandler
+            }
+            val fileName = call.argument<String>("fileName")
+            val mimeType = call.argument<String>("mimeType")
+            val content = call.argument<String>("content")
+            if (fileName == null || mimeType == null || content == null) {
+                result.error("invalid_arguments", "Report arguments are incomplete.", null)
+                return@setMethodCallHandler
+            }
+            saveReport(fileName, mimeType, content, result)
+        }
     }
 
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
@@ -137,8 +157,48 @@ class MainActivity : FlutterFragmentActivity() {
                 }
                 val uri = data.data!!
                 runFileOperation(pending) {
-                    fileResult(uri, queryDisplayName(uri, "DokiDo_Backup.dokido"))
+                    fileResult(
+                        uri,
+                        queryDisplayName(uri, "${appDisplayName}_Backup.dokido"),
+                    )
                 }
+            }
+            REPORT_FILE_PICKER_REQUEST -> {
+                val pending = reportFilePickerResult ?: return
+                val content = pendingReportContent
+                reportFilePickerResult = null
+                pendingReportContent = null
+                if (resultCode != Activity.RESULT_OK || data?.data == null) {
+                    pending.success(false)
+                    return
+                }
+                if (content == null) {
+                    pending.error(
+                        "report_content_missing",
+                        "The generated report is no longer available.",
+                        null,
+                    )
+                    return
+                }
+                val uri = data.data!!
+                Thread {
+                    try {
+                        val bytes = Base64.decode(content, Base64.DEFAULT)
+                        contentResolver.openOutputStream(uri, "wt")?.use { output ->
+                            output.write(bytes)
+                            output.flush()
+                        } ?: throw IllegalStateException("The report file cannot be written.")
+                        runOnUiThread { pending.success(true) }
+                    } catch (error: Exception) {
+                        runOnUiThread {
+                            pending.error(
+                                "report_file_error",
+                                error.message ?: "The report could not be saved.",
+                                null,
+                            )
+                        }
+                    }
+                }.start()
             }
         }
     }
@@ -171,6 +231,40 @@ class MainActivity : FlutterFragmentActivity() {
             addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
         }
         startActivityForResult(intent, BACKUP_FILE_PICKER_REQUEST)
+    }
+
+    private fun saveReport(
+        fileName: String,
+        mimeType: String,
+        content: String,
+        result: MethodChannel.Result,
+    ) {
+        if (reportFilePickerResult != null) {
+            result.error("picker_active", "A report file picker is already active.", null)
+            return
+        }
+        reportFilePickerResult = result
+        pendingReportContent = content
+        val intent = Intent(Intent.ACTION_CREATE_DOCUMENT).apply {
+            addCategory(Intent.CATEGORY_OPENABLE)
+            type = mimeType
+            putExtra(Intent.EXTRA_TITLE, fileName)
+            addFlags(
+                Intent.FLAG_GRANT_READ_URI_PERMISSION or
+                    Intent.FLAG_GRANT_WRITE_URI_PERMISSION,
+            )
+        }
+        try {
+            startActivityForResult(intent, REPORT_FILE_PICKER_REQUEST)
+        } catch (error: Exception) {
+            reportFilePickerResult = null
+            pendingReportContent = null
+            result.error(
+                "report_picker_unavailable",
+                error.message ?: "The report file picker is unavailable.",
+                null,
+            )
+        }
     }
 
     private fun writeRotatingBackup(
@@ -268,11 +362,14 @@ class MainActivity : FlutterFragmentActivity() {
         return try {
             DocumentsContract.getTreeDocumentId(uri)
                 .substringAfterLast(':')
-                .ifBlank { "DokiDo Backup" }
+                .ifBlank { "$appDisplayName Backup" }
         } catch (_: Exception) {
-            "DokiDo Backup"
+            "$appDisplayName Backup"
         }
     }
+
+    private val appDisplayName: String
+        get() = applicationInfo.loadLabel(packageManager).toString()
 
     private fun runFileOperation(
         result: MethodChannel.Result,
@@ -296,7 +393,9 @@ class MainActivity : FlutterFragmentActivity() {
 
     companion object {
         private const val BACKUP_CHANNEL = "com.dokido.finance/backup_files"
+        private const val REPORT_CHANNEL = "com.dokido.finance/report_files"
         private const val DIRECTORY_PICKER_REQUEST = 4101
         private const val BACKUP_FILE_PICKER_REQUEST = 4102
+        private const val REPORT_FILE_PICKER_REQUEST = 4103
     }
 }

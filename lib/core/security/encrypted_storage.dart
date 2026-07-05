@@ -3,6 +3,8 @@ import 'dart:convert';
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
+import '../app_info/app_identity.dart';
+
 abstract interface class EncryptionKeyStore {
   Future<String?> read();
 
@@ -193,6 +195,6 @@ class EncryptedStorage {
   }
 
   List<int> _additionalData(String scope) {
-    return utf8.encode('DokiDo:$scope:v$_version');
+    return utf8.encode('${AppIdentity.storageProtocolId}:$scope:v$_version');
   }
 }

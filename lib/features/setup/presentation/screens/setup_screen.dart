@@ -67,7 +67,7 @@ class _SetupScreenState extends ConsumerState<SetupScreen> {
 
   int _stepIndex = 0;
   String _themeId = AppThemePalettes.tealBalance.id;
-  AppLanguage _language = AppLanguage.id;
+  AppLanguage _language = AppLanguage.systemDefault;
   AppCurrency _currency = AppCurrency.idr;
   DateTime? _startDate;
   DateTime? _endDate;

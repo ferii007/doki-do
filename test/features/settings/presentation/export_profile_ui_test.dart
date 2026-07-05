@@ -1,7 +1,10 @@
 import 'package:doki_do/core/app_info/app_version_provider.dart';
+import 'package:doki_do/core/localization/app_localizations.dart';
+import 'package:doki_do/app/router.dart';
 import 'package:doki_do/features/finance/presentation/providers/current_budget_provider.dart';
 import 'package:doki_do/features/finance/presentation/widgets/dashboard/profile_tab_body.dart';
 import 'package:doki_do/features/settings/domain/entities/app_settings.dart';
+import 'package:doki_do/features/settings/domain/entities/app_language.dart';
 import 'package:doki_do/features/settings/presentation/providers/app_settings_provider.dart';
 import 'package:doki_do/features/settings/presentation/screens/export_report_templates_screen.dart';
 import 'package:flutter/material.dart';
@@ -9,7 +12,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 void main() {
-  testWidgets('profile data actions render and show unavailable toast', (
+  testWidgets('profile opens Export and keeps Import unavailable', (
     tester,
   ) async {
     tester.view.physicalSize = const Size(360, 800);
@@ -25,6 +28,11 @@ void main() {
           appVersionProvider.overrideWith((ref) async => '1.0.0+1'),
         ],
         child: MaterialApp(
+          builder: _indonesianLocalizationBuilder,
+          routes: {
+            AppRouter.exportReport: (_) =>
+                const Scaffold(body: Text('Halaman Export')),
+          },
           home: Scaffold(
             body: ListView(
               children: const [ProfileTabBody(currentSnapshot: null)],
@@ -37,13 +45,22 @@ void main() {
 
     expect(find.text('Ekspor Laporan'), findsOneWidget);
     expect(find.text('Impor Data'), findsOneWidget);
+    expect(
+      tester.getSize(find.byKey(const ValueKey('profile-summary-grid'))).height,
+      lessThan(175),
+    );
     expect(tester.takeException(), isNull);
 
-    await tester.tap(find.text('Ekspor Laporan'));
+    await tester.tap(find.text('Impor Data'));
     await tester.pump();
 
     expect(find.text('Fitur ini belum tersedia.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
+
+    await tester.tap(find.text('Ekspor Laporan'));
+    await tester.pumpAndSettle();
+
+    expect(find.text('Halaman Export'), findsOneWidget);
   });
 
   testWidgets('export templates default to Dashboard and can select Basic', (
@@ -62,7 +79,10 @@ void main() {
     await tester.pumpWidget(
       UncontrolledProviderScope(
         container: container,
-        child: const MaterialApp(home: ExportReportTemplatesScreen()),
+        child: MaterialApp(
+          builder: _indonesianLocalizationBuilder,
+          home: const ExportReportTemplatesScreen(),
+        ),
       ),
     );
     await tester.pumpAndSettle();
@@ -86,6 +106,13 @@ void main() {
     expect(find.text('Template Basic dipilih.'), findsOneWidget);
     await tester.pump(const Duration(seconds: 3));
   });
+}
+
+Widget _indonesianLocalizationBuilder(BuildContext context, Widget? child) {
+  return AppLocalizationsScope(
+    localizations: const AppLocalizations(AppLanguage.id),
+    child: child ?? const SizedBox.shrink(),
+  );
 }
 
 class _FakeSettingsNotifier extends AppSettingsNotifier {

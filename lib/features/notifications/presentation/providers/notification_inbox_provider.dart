@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/app_info/app_identity.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../finance/domain/entities/budget_snapshot.dart';
 import '../../../finance/domain/entities/recurring_due_item.dart';
@@ -203,7 +204,7 @@ Future<void> reportNotificationInboxError(
     FlutterErrorDetails(
       exception: error,
       stack: stackTrace,
-      library: 'DokiDo notification inbox',
+      library: '${AppIdentity.appName} notification inbox',
     ),
   );
 }

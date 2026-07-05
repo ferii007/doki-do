@@ -2,6 +2,8 @@ import 'dart:convert';
 
 import 'package:flutter/services.dart';
 
+import '../../../core/app_info/app_identity.dart';
+
 class BackupDirectory {
   final String uri;
   final String name;
@@ -30,8 +32,10 @@ abstract interface class BackupFileGateway {
 }
 
 class PlatformBackupFileGateway implements BackupFileGateway {
-  static const currentFileName = 'DokiDo_AutoBackup_Current.dokido';
-  static const previousFileName = 'DokiDo_AutoBackup_Previous.dokido';
+  static const currentFileName =
+      '${AppIdentity.appName}_AutoBackup_Current.dokido';
+  static const previousFileName =
+      '${AppIdentity.appName}_AutoBackup_Previous.dokido';
   static const _channel = MethodChannel('com.dokido.finance/backup_files');
 
   const PlatformBackupFileGateway();

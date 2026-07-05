@@ -27,7 +27,7 @@ void main() {
     }
   });
 
-  testWidgets('renders DokiDo app root', (tester) async {
+  testWidgets('renders app root', (tester) async {
     await tester.pumpWidget(
       ProviderScope(
         overrides: [
@@ -39,12 +39,12 @@ void main() {
             ),
           ),
         ],
-        child: const DokiDoApp(),
+        child: const AppRoot(),
       ),
     );
     await tester.pump(const Duration(seconds: 1));
 
-    expect(find.byType(DokiDoApp), findsOneWidget);
+    expect(find.byType(AppRoot), findsOneWidget);
   });
 }
 

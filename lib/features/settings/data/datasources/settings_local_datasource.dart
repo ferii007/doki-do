@@ -3,6 +3,7 @@ import 'dart:io';
 
 import 'package:path_provider/path_provider.dart';
 
+import '../../../../core/app_info/app_identity.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/security/encrypted_storage.dart';
 import '../../../../core/storage/async_write_queue.dart';
@@ -11,7 +12,7 @@ import '../../domain/entities/app_language.dart';
 import '../../domain/entities/app_settings.dart';
 
 class SettingsLocalDatasource {
-  static const _schemaVersion = 5;
+  static const _schemaVersion = 6;
   static const _storageFileName = 'doki_do_settings.json';
   static const _encryptionScope = 'settings';
 
@@ -96,6 +97,12 @@ class SettingsLocalDatasource {
           settings['export_report_template'] ??= 'dashboard';
           settings['schema_version'] = 5;
           version = 5;
+        case 5:
+          if (settings['email'] == AppIdentity.legacyDeveloperEmail) {
+            settings['email'] = AppIdentity.developerEmail;
+          }
+          settings['schema_version'] = 6;
+          version = 6;
         default:
           throw FormatException(
             'No settings migration exists from schema version $version.',

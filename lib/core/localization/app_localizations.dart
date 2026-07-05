@@ -1,5 +1,6 @@
 import 'package:flutter/widgets.dart';
 
+import '../app_info/app_identity.dart';
 import '../../features/settings/domain/entities/app_language.dart';
 
 class AppLocalizations {
@@ -16,8 +17,14 @@ class AppLocalizations {
   }
 
   String tr(String key) {
-    if (language == AppLanguage.id) return _id[key] ?? key;
-    return _en[key] ?? key;
+    final translated = language == AppLanguage.id
+        ? _id[key] ?? key
+        : _en[key] ?? key;
+    return translated
+        .replaceAll('{appName}', AppIdentity.appName)
+        .replaceAll('{appTitle}', AppIdentity.appTitle)
+        .replaceAll('{developerName}', AppIdentity.developerName)
+        .replaceAll('{developerEmail}', AppIdentity.developerEmail);
   }
 
   String trf(String key, Map<String, Object> values) {
@@ -204,7 +211,7 @@ const _id = <String, String>{
   'edit_expense': 'Edit Uang Keluar',
   'edit_income': 'Edit Uang Masuk',
   'financial_profile': 'Profil Keuangan',
-  'dokido_user': 'Pengguna DokiDo',
+  'dokido_user': 'Pengguna {appName}',
   'recorded_periods': 'Periode Tercatat',
   'active_categories': 'Kategori Aktif',
   'income': 'Uang Masuk',
@@ -258,6 +265,66 @@ const _id = <String, String>{
   'basic_export_template_description':
       'Tabel sederhana yang mudah dibaca dan diolah.',
   'export_template_selected': 'Template {template} dipilih.',
+  'financial_report': 'Laporan Keuangan',
+  'financial_trend': 'Tren Keuangan',
+  'cash_flow': 'Arus Keuangan',
+  'expense_composition': 'Komposisi Pengeluaran',
+  'category_summary': 'Ringkasan Kategori',
+  'category_details': 'Rincian Kategori',
+  'recorded_transactions': 'Transaksi Tercatat',
+  'transaction_highlights': 'Sorotan Transaksi',
+  'category_highlights': 'Sorotan Kategori',
+  'largest_income': 'Pemasukan Terbesar',
+  'largest_expense': 'Pengeluaran Terbesar',
+  'latest_transaction': 'Transaksi Terbaru',
+  'transaction': 'Transaksi',
+  'largest_remaining_budget': 'Sisa Anggaran Terbesar',
+  'highest_deficit': 'Defisit Tertinggi',
+  'others': 'Lainnya',
+  'usage_progress': 'Progres Pemakaian',
+  'chart_data': 'Data Grafik',
+  'transaction_details': 'Rincian Transaksi',
+  'report_generated_for': 'Dibuat untuk {name} pada {date}',
+  'page_of_pages': 'Halaman {page} dari {pages}',
+  'financial_period_count': '{count} Periode Keuangan',
+  'budget_realization': 'Realisasi Anggaran',
+  'no_transactions_to_export': 'Belum Ada Transaksi Untuk Diekspor',
+  'no_budget_categories_yet': 'Belum Ada Kategori Anggaran',
+  'pdf': 'PDF',
+  'excel': 'Excel',
+  'dashboard': 'Dashboard',
+  'budget_type': 'Jenis Anggaran',
+  'allocation_percentage': 'Persentase Alokasi',
+  'source_category': 'Kategori Sumber',
+  'previous_amount': 'Jumlah Sebelumnya',
+  'change_amount': 'Jumlah Perubahan',
+  'new_amount': 'Jumlah Baru',
+  'follows_incoming_money': 'Ikut Uang Masuk',
+  'usage': 'Pemakaian',
+  'type': 'Jenis',
+  'description': 'Keterangan',
+  'data_scope': 'Cakupan Data',
+  'selected_financial_periods': 'Pilih Periode',
+  'date_range': 'Rentang Tanggal',
+  'all_financial_periods': 'Semua Periode',
+  'choose_financial_periods': 'Pilih Periode Keuangan',
+  'selected_period_count': '{count} Periode Dipilih',
+  'use_selected_periods': 'Gunakan {count} Periode',
+  'use_date_range': 'Gunakan Rentang Tanggal',
+  'file_format': 'Format File',
+  'active_export_template': 'Template Ekspor Aktif',
+  'preparing_report': 'Menyiapkan Laporan',
+  'saving_report': 'Menyimpan Laporan',
+  'save_to_device': 'Simpan Ke Perangkat',
+  'share_report': 'Bagikan Laporan',
+  'report_ready_to_share': '{file} siap dibagikan.',
+  'report_saved_to_device': '{file} berhasil disimpan.',
+  'saving_report_cancelled': 'Penyimpanan laporan dibatalkan.',
+  'report_save_failed': 'Laporan gagal disimpan. Coba lagi.',
+  'report_export_failed': 'Laporan gagal dibuat. Coba lagi.',
+  'export_content_summary':
+      '{periods} periode, {transactions} transaksi, dan {categories} kategori akan dibuat sebagai {format}.',
+  'no_data_to_export': 'Belum Ada Data Keuangan Untuk Diekspor',
   'quick_templates': 'Template Cepat',
   'quick_template': 'Template Cepat',
   'recurring_transactions': 'Transaksi Berulang',
@@ -302,7 +369,7 @@ const _id = <String, String>{
   'invalid_reminder_time': 'Jam pengingat tidak valid.',
   'recurring_notification_title': 'Waktunya Mencatat Transaksi',
   'recurring_notification_body':
-      '"{title}" sudah jatuh tempo. Buka DokiDo untuk memeriksa dan mencatatnya.',
+      '"{title}" sudah jatuh tempo. Buka {appName} untuk memeriksa dan mencatatnya.',
   'recurring_notification_private_body':
       'Ada transaksi berulang yang perlu diperiksa dan dicatat.',
   'recurring_notification_channel': 'Transaksi Berulang',
@@ -310,7 +377,7 @@ const _id = <String, String>{
       'Pengingat untuk draf uang masuk dan uang keluar berulang.',
   'enable_transaction_reminders': 'Aktifkan Pengingat Transaksi',
   'notification_permission_modal_description':
-      'Izinkan notifikasi DokiDo melalui pengaturan perangkat supaya transaksi berulang tidak terlewat. Memilih Lain Kali akan menutup pengingat ini secara permanen.',
+      'Izinkan notifikasi {appName} melalui pengaturan perangkat supaya transaksi berulang tidak terlewat. Memilih Lain Kali akan menutup pengingat ini secara permanen.',
   'go_to_settings': 'Pergi Ke Pengaturan',
   'open_settings': 'Buka Pengaturan',
   'later': 'Lain Kali',
@@ -325,26 +392,26 @@ const _id = <String, String>{
   'app_lock_active': 'Kunci Aplikasi Aktif',
   'app_lock_inactive': 'Kunci Aplikasi Nonaktif',
   'app_lock_active_description':
-      'DokiDo meminta autentikasi sebelum menampilkan data keuangan.',
+      '{appName} meminta autentikasi sebelum menampilkan data keuangan.',
   'app_lock_inactive_description':
       'Data keuangan dapat dibuka tanpa PIN aplikasi.',
   'enable_app_lock': 'Aktifkan Kunci Aplikasi',
   'enable_app_lock_description':
-      'Gunakan PIN 6 digit dan biometrik perangkat untuk melindungi akses ke DokiDo.',
+      'Gunakan PIN 6 digit dan biometrik perangkat untuk melindungi akses ke {appName}.',
   'create_app_lock_pin': 'Buat PIN Aplikasi',
   'create_app_lock_pin_description':
       'Masukkan 6 digit yang mudah Anda ingat tetapi sulit ditebak.',
   'confirm_app_lock_pin': 'Konfirmasi PIN',
   'confirm_app_lock_pin_description': 'Masukkan kembali PIN yang baru dibuat.',
   'pin_does_not_match': 'PIN tidak sama. Coba lagi.',
-  'unlock_dokido': 'Buka DokiDo',
+  'unlock_dokido': 'Buka {appName}',
   'enter_app_lock_pin': 'Masukkan PIN aplikasi untuk melanjutkan.',
   'incorrect_pin': 'PIN salah.',
   'try_again_in_seconds': 'Coba lagi dalam {seconds} detik.',
   'forgot_pin': 'Lupa PIN?',
-  'biometric_unlock_reason': 'Gunakan biometrik untuk membuka DokiDo.',
+  'biometric_unlock_reason': 'Gunakan biometrik untuk membuka {appName}.',
   'recover_pin_reason':
-      'Konfirmasi identitas perangkat untuk membuat PIN DokiDo baru.',
+      'Konfirmasi identitas perangkat untuk membuat PIN {appName} baru.',
   'device_auth_unavailable':
       'Autentikasi perangkat belum tersedia atau belum disiapkan.',
   'device_auth_locked':
@@ -354,7 +421,7 @@ const _id = <String, String>{
   'create_new_app_lock_pin_description':
       'PIN lama akan diganti setelah PIN baru dikonfirmasi.',
   'recovered_pin_description':
-      'Identitas berhasil dikonfirmasi. Buat PIN DokiDo yang baru.',
+      'Identitas berhasil dikonfirmasi. Buat PIN {appName} yang baru.',
   'verify_app_lock_pin': 'Verifikasi PIN',
   'verify_it_is_you': 'Konfirmasi Identitas',
   'verify_pin_description':
@@ -370,13 +437,13 @@ const _id = <String, String>{
   'change_pin': 'Ubah PIN',
   'change_pin_description': 'Ganti PIN aplikasi yang digunakan saat ini.',
   'lock_now': 'Kunci Sekarang',
-  'lock_now_description': 'Tutup halaman ini dan langsung kunci DokiDo.',
+  'lock_now_description': 'Tutup halaman ini dan langsung kunci {appName}.',
   'disable_app_lock': 'Nonaktifkan Kunci Aplikasi',
   'disable_app_lock_description':
-      'Hapus perlindungan PIN dan biometrik dari DokiDo.',
+      'Hapus perlindungan PIN dan biometrik dari {appName}.',
   'disable_app_lock_confirmation': 'Nonaktifkan Kunci Aplikasi?',
   'disable_app_lock_confirmation_description':
-      'DokiDo dapat dibuka tanpa PIN atau biometrik setelah dinonaktifkan.',
+      '{appName} dapat dibuka tanpa PIN atau biometrik setelah dinonaktifkan.',
   'disable': 'Nonaktifkan',
   'enable': 'Aktifkan',
   'app_lock_enabled_successfully': 'Kunci aplikasi berhasil diaktifkan.',
@@ -386,11 +453,11 @@ const _id = <String, String>{
       'Biometrik belum tersedia atau belum didaftarkan di perangkat.',
   'enable_biometric_unlock': 'Aktifkan Biometrik?',
   'enable_biometric_unlock_description':
-      'Gunakan sidik jari atau pengenalan wajah untuk membuka DokiDo lebih cepat.',
+      'Gunakan sidik jari atau pengenalan wajah untuk membuka {appName} lebih cepat.',
   'enable_biometric_reason':
-      'Konfirmasi biometrik untuk mengaktifkan buka kunci DokiDo.',
+      'Konfirmasi biometrik untuk mengaktifkan buka kunci {appName}.',
   'verify_security_change_reason':
-      'Konfirmasi biometrik untuk mengubah keamanan DokiDo.',
+      'Konfirmasi biometrik untuk mengubah keamanan {appName}.',
   'error_recurring_template_not_found':
       'Jadwal transaksi berulang sudah tidak tersedia.',
   'error_recurring_occurrence_already_processed':
@@ -584,12 +651,12 @@ const _id = <String, String>{
   'initial_categories': 'Kategori Awal',
   'choose_how_to_split_the_balance': 'Pilih Cara Membagi Saldo',
   'dokido_will_calculate_category_amounts_from_your_opening_balance':
-      'DokiDo akan menghitung nominal kategori dari saldo awalmu.',
+      '{appName} akan menghitung nominal kategori dari saldo awalmu.',
   'custom_percentage': 'Persentase Kustom',
   'custom_amount': 'Nominal Kustom',
   'review_before_starting': 'Cek Dulu Sebelum Mulai',
   'if_everything_looks_right_dokido_will_prepare_your_dashboard':
-      'Kalau sudah benar, DokiDo akan menyiapkan dashboard kamu.',
+      'Kalau sudah benar, {appName} akan menyiapkan dashboard kamu.',
   'name': 'Nama',
   'balance_source': 'Sumber Saldo',
   'unallocated_balance_2': 'Sisa Belum Dibagi',
@@ -609,7 +676,7 @@ const _id = <String, String>{
   'budget_category_names_cannot_be_duplicated_2':
       'Nama kategori anggaran tidak boleh sama.',
   'setup_complete_dokido_is_ready_to_use':
-      'Setup selesai. DokiDo siap dipakai.',
+      'Setup selesai. {appName} siap dipakai.',
   'there_must_be_at_least_one_budget_category':
       'Minimal harus ada satu kategori anggaran.',
   'all_percentages_must_be_greater_than_0':
@@ -629,7 +696,7 @@ const _id = <String, String>{
   'choose_the_currency_and_visual_style_that_feels_comfortable':
       'Pilih mata uang dan gaya tampilan yang nyaman untukmu.',
   'fresh_modern_and_closest_to_dokido_s_identity':
-      'Segar, modern, dan paling dekat dengan identitas DokiDo.',
+      'Segar, modern, dan paling dekat dengan identitas {appName}.',
   'soft_lavender_with_warm_balance':
       'Lavender lembut dengan aksen hangat yang seimbang.',
   'cool_blue_clean_and_focused': 'Biru sejuk, bersih, dan fokus.',
@@ -796,7 +863,7 @@ const _id = <String, String>{
   'backup_passwords_do_not_match': 'Konfirmasi kata sandi belum sama.',
   'backup_password_or_file_invalid':
       'Kata sandi salah atau file backup tidak dapat dibaca.',
-  'backup_file_invalid': 'File ini bukan backup DokiDo yang valid.',
+  'backup_file_invalid': 'File ini bukan backup {appName} yang valid.',
   'backup_password_not_configured': 'Buat kata sandi backup terlebih dahulu.',
   'backup_credential_mismatch':
       'Kunci backup tidak cocok. Atur ulang kata sandi backup.',
@@ -834,7 +901,7 @@ const _id = <String, String>{
   'transactions': 'Transaksi',
   'restore_replaces_current_data_warning':
       'Seluruh data keuangan saat ini akan diganti. PIN dan pengaturan App Lock tetap dipertahankan.',
-  'backup_restored_successfully': 'Data DokiDo berhasil dipulihkan.',
+  'backup_restored_successfully': 'Data {appName} berhasil dipulihkan.',
   'change_display_name': 'Ubah Nama Yang Ditampilkan',
   'display_name_hint': 'Masukkan nama yang ingin ditampilkan',
   'display_name_required': 'Nama yang ditampilkan wajib diisi.',
@@ -842,19 +909,19 @@ const _id = <String, String>{
   'terms_and_conditions': 'Syarat & Ketentuan',
   'privacy_policy': 'Kebijakan Privasi',
   'version': 'Versi',
-  'powered_by_niskala': 'Powered by Niskala.dev',
+  'powered_by_developer': 'Powered by {developerName}',
   'terms_and_conditions_content':
       'Terakhir diperbarui: Juli 2026\n\n'
-      'DokiDo adalah aplikasi pencatatan keuangan pribadi yang bekerja secara lokal di perangkat. Dengan menggunakan DokiDo, pengguna bertanggung jawab atas kebenaran data yang dicatat dan keputusan keuangan yang dibuat berdasarkan data tersebut.\n\n'
-      'DokiDo tidak menyediakan layanan perbankan, investasi, perpajakan, atau nasihat keuangan profesional. Perhitungan aplikasi membantu pencatatan dan perencanaan, tetapi tetap perlu diperiksa oleh pengguna.\n\n'
+      '{appName} adalah aplikasi pencatatan keuangan pribadi yang bekerja secara lokal di perangkat. Dengan menggunakan {appName}, pengguna bertanggung jawab atas kebenaran data yang dicatat dan keputusan keuangan yang dibuat berdasarkan data tersebut.\n\n'
+      '{appName} tidak menyediakan layanan perbankan, investasi, perpajakan, atau nasihat keuangan profesional. Perhitungan aplikasi membantu pencatatan dan perencanaan, tetapi tetap perlu diperiksa oleh pengguna.\n\n'
       'Pengguna bertanggung jawab menjaga perangkat, PIN aplikasi, kata sandi backup, dan file backup. File backup yang kata sandinya terlupa tidak dapat dipulihkan.\n\n'
-      'Fitur dan struktur data dapat berubah selama masa beta. Niskala.dev berupaya menjaga keandalan aplikasi, tetapi pengguna tetap disarankan membuat backup berkala.',
+      'Fitur dan struktur data dapat berubah selama masa beta. {developerName} berupaya menjaga keandalan aplikasi, tetapi pengguna tetap disarankan membuat backup berkala.',
   'privacy_policy_content':
       'Terakhir diperbarui: Juli 2026\n\n'
-      'DokiDo dirancang sebagai aplikasi offline. Data keuangan utama disimpan secara terenkripsi di perangkat dan tidak dikirim ke server DokiDo.\n\n'
+      '{appName} dirancang sebagai aplikasi offline. Data keuangan utama disimpan secara terenkripsi di perangkat dan tidak dikirim ke server {appName}.\n\n'
       'Izin notifikasi digunakan untuk pengingat transaksi dan peringatan keuangan yang dipilih. Akses folder backup diberikan melalui pemilih folder Android dan hanya berlaku untuk folder yang disetujui pengguna.\n\n'
       'File backup dienkripsi dengan kata sandi backup. Jika pengguna menyimpan file ke layanan cloud atau membagikannya, pengelolaan file tersebut mengikuti kebijakan layanan tujuan.\n\n'
-      'DokiDo tidak mengakses data biometrik mentah. Verifikasi biometrik dilakukan oleh sistem operasi perangkat.',
+      '{appName} tidak mengakses data biometrik mentah. Verifikasi biometrik dilakukan oleh sistem operasi perangkat.',
   'notifications': 'Notifikasi',
   'mark_all_as_read': 'Tandai Semua Dibaca',
   'unread': 'Belum Dibaca',
@@ -862,7 +929,8 @@ const _id = <String, String>{
   'no_notifications_yet': 'Belum ada notifikasi.',
   'no_unread_notifications': 'Semua notifikasi sudah dibaca.',
   'delete_notification': 'Hapus Notifikasi?',
-  'delete_notification_description': 'Notifikasi ini akan dihapus dari DokiDo.',
+  'delete_notification_description':
+      'Notifikasi ini akan dihapus dari {appName}.',
   'record_now': 'Catat Sekarang',
   'view_budget': 'Lihat Anggaran',
   'fix': 'Perbaiki',
@@ -888,10 +956,10 @@ const _id = <String, String>{
       'Periode {period} berakhir dalam {days} hari.',
   'financial_alert_notification_channel': 'Peringatan Keuangan',
   'financial_alert_notification_channel_description':
-      'Peringatan anggaran, periode, dan backup DokiDo.',
-  'private_notification_title': 'Pemberitahuan DokiDo',
+      'Peringatan anggaran, periode, dan backup {appName}.',
+  'private_notification_title': 'Pemberitahuan {appName}',
   'private_notification_body':
-      'Buka DokiDo untuk melihat pemberitahuan terbaru.',
+      'Buka {appName} untuk melihat pemberitahuan terbaru.',
 };
 
 const _en = <String, String>{
@@ -1022,7 +1090,7 @@ const _en = <String, String>{
   'edit_expense': 'Edit Expense',
   'edit_income': 'Edit Income',
   'financial_profile': 'Financial Profile',
-  'dokido_user': 'DokiDo User',
+  'dokido_user': '{appName} User',
   'recorded_periods': 'Recorded Periods',
   'active_categories': 'Active Categories',
   'income': 'Income',
@@ -1074,6 +1142,66 @@ const _en = <String, String>{
   'basic_export_template_description':
       'A simple table that is easy to read and process.',
   'export_template_selected': '{template} template selected.',
+  'financial_report': 'Financial Report',
+  'financial_trend': 'Financial Trend',
+  'cash_flow': 'Cash Flow',
+  'expense_composition': 'Expense Composition',
+  'category_summary': 'Category Summary',
+  'category_details': 'Category Details',
+  'recorded_transactions': 'Recorded Transactions',
+  'transaction_highlights': 'Transaction Highlights',
+  'category_highlights': 'Category Highlights',
+  'largest_income': 'Largest Income',
+  'largest_expense': 'Largest Expense',
+  'latest_transaction': 'Latest Transaction',
+  'transaction': 'Transaction',
+  'largest_remaining_budget': 'Largest Remaining Budget',
+  'highest_deficit': 'Highest Deficit',
+  'others': 'Others',
+  'usage_progress': 'Usage Progress',
+  'chart_data': 'Chart Data',
+  'transaction_details': 'Transaction Details',
+  'report_generated_for': 'Created for {name} on {date}',
+  'page_of_pages': 'Page {page} of {pages}',
+  'financial_period_count': '{count} Financial Periods',
+  'budget_realization': 'Budget Realization',
+  'no_transactions_to_export': 'No Transactions To Export Yet',
+  'no_budget_categories_yet': 'No Budget Categories Yet',
+  'pdf': 'PDF',
+  'excel': 'Excel',
+  'dashboard': 'Dashboard',
+  'budget_type': 'Budget Type',
+  'allocation_percentage': 'Allocation Percentage',
+  'source_category': 'Source Category',
+  'previous_amount': 'Previous Amount',
+  'change_amount': 'Change Amount',
+  'new_amount': 'New Amount',
+  'follows_incoming_money': 'Follows Incoming Money',
+  'usage': 'Usage',
+  'type': 'Type',
+  'description': 'Description',
+  'data_scope': 'Data Scope',
+  'selected_financial_periods': 'Select Periods',
+  'date_range': 'Date Range',
+  'all_financial_periods': 'All Periods',
+  'choose_financial_periods': 'Select Financial Periods',
+  'selected_period_count': '{count} Periods Selected',
+  'use_selected_periods': 'Use {count} Periods',
+  'use_date_range': 'Use Date Range',
+  'file_format': 'File Format',
+  'active_export_template': 'Active Export Template',
+  'preparing_report': 'Preparing Report',
+  'saving_report': 'Saving Report',
+  'save_to_device': 'Save To Device',
+  'share_report': 'Share Report',
+  'report_ready_to_share': '{file} is ready to share.',
+  'report_saved_to_device': '{file} was saved successfully.',
+  'saving_report_cancelled': 'Report saving was cancelled.',
+  'report_save_failed': 'The report could not be saved. Try again.',
+  'report_export_failed': 'The report could not be created. Try again.',
+  'export_content_summary':
+      '{periods} periods, {transactions} transactions, and {categories} categories will be created as {format}.',
+  'no_data_to_export': 'No Financial Data To Export Yet',
   'quick_templates': 'Quick Templates',
   'quick_template': 'Quick Template',
   'recurring_transactions': 'Recurring Transactions',
@@ -1119,7 +1247,7 @@ const _en = <String, String>{
   'invalid_reminder_time': 'The reminder time is invalid.',
   'recurring_notification_title': 'Time To Record A Transaction',
   'recurring_notification_body':
-      '"{title}" is due. Open DokiDo to review and record it.',
+      '"{title}" is due. Open {appName} to review and record it.',
   'recurring_notification_private_body':
       'A recurring transaction needs to be reviewed and recorded.',
   'recurring_notification_channel': 'Recurring Transactions',
@@ -1127,7 +1255,7 @@ const _en = <String, String>{
       'Reminders for recurring income and expense drafts.',
   'enable_transaction_reminders': 'Enable Transaction Reminders',
   'notification_permission_modal_description':
-      'Allow DokiDo notifications in your device settings so recurring transactions are not missed. Choosing Later will permanently dismiss this reminder.',
+      'Allow {appName} notifications in your device settings so recurring transactions are not missed. Choosing Later will permanently dismiss this reminder.',
   'go_to_settings': 'Go To Settings',
   'open_settings': 'Open Settings',
   'later': 'Later',
@@ -1142,26 +1270,26 @@ const _en = <String, String>{
   'app_lock_active': 'App Lock Active',
   'app_lock_inactive': 'App Lock Inactive',
   'app_lock_active_description':
-      'DokiDo requires authentication before showing financial data.',
+      '{appName} requires authentication before showing financial data.',
   'app_lock_inactive_description':
       'Financial data can be opened without an app PIN.',
   'enable_app_lock': 'Enable App Lock',
   'enable_app_lock_description':
-      'Use a 6-digit PIN and device biometrics to protect access to DokiDo.',
+      'Use a 6-digit PIN and device biometrics to protect access to {appName}.',
   'create_app_lock_pin': 'Create App PIN',
   'create_app_lock_pin_description':
       'Enter 6 digits that are easy for you to remember but difficult to guess.',
   'confirm_app_lock_pin': 'Confirm PIN',
   'confirm_app_lock_pin_description': 'Enter the new PIN again.',
   'pin_does_not_match': 'PINs do not match. Try again.',
-  'unlock_dokido': 'Unlock DokiDo',
+  'unlock_dokido': 'Unlock {appName}',
   'enter_app_lock_pin': 'Enter the app PIN to continue.',
   'incorrect_pin': 'Incorrect PIN.',
   'try_again_in_seconds': 'Try again in {seconds} seconds.',
   'forgot_pin': 'Forgot PIN?',
-  'biometric_unlock_reason': 'Use biometrics to unlock DokiDo.',
+  'biometric_unlock_reason': 'Use biometrics to unlock {appName}.',
   'recover_pin_reason':
-      'Confirm your device identity to create a new DokiDo PIN.',
+      'Confirm your device identity to create a new {appName} PIN.',
   'device_auth_unavailable':
       'Device authentication is unavailable or has not been configured.',
   'device_auth_locked':
@@ -1171,7 +1299,7 @@ const _en = <String, String>{
   'create_new_app_lock_pin_description':
       'The current PIN will be replaced after confirming the new PIN.',
   'recovered_pin_description':
-      'Your identity was confirmed. Create a new DokiDo PIN.',
+      'Your identity was confirmed. Create a new {appName} PIN.',
   'verify_app_lock_pin': 'Verify PIN',
   'verify_it_is_you': 'Confirm Your Identity',
   'verify_pin_description':
@@ -1187,13 +1315,13 @@ const _en = <String, String>{
   'change_pin': 'Change PIN',
   'change_pin_description': 'Replace the current app PIN.',
   'lock_now': 'Lock Now',
-  'lock_now_description': 'Close this page and lock DokiDo immediately.',
+  'lock_now_description': 'Close this page and lock {appName} immediately.',
   'disable_app_lock': 'Disable App Lock',
   'disable_app_lock_description':
-      'Remove PIN and biometric protection from DokiDo.',
+      'Remove PIN and biometric protection from {appName}.',
   'disable_app_lock_confirmation': 'Disable App Lock?',
   'disable_app_lock_confirmation_description':
-      'DokiDo can be opened without a PIN or biometrics after disabling it.',
+      '{appName} can be opened without a PIN or biometrics after disabling it.',
   'disable': 'Disable',
   'enable': 'Enable',
   'app_lock_enabled_successfully': 'App Lock enabled successfully.',
@@ -1203,11 +1331,11 @@ const _en = <String, String>{
       'Biometrics are unavailable or not enrolled on this device.',
   'enable_biometric_unlock': 'Enable Biometrics?',
   'enable_biometric_unlock_description':
-      'Use fingerprint or face recognition to unlock DokiDo faster.',
+      'Use fingerprint or face recognition to unlock {appName} faster.',
   'enable_biometric_reason':
-      'Confirm biometrics to enable DokiDo biometric unlock.',
+      'Confirm biometrics to enable {appName} biometric unlock.',
   'verify_security_change_reason':
-      'Confirm biometrics to change DokiDo security.',
+      'Confirm biometrics to change {appName} security.',
   'error_recurring_template_not_found':
       'The recurring transaction schedule is no longer available.',
   'error_recurring_occurrence_already_processed':
@@ -1402,12 +1530,12 @@ const _en = <String, String>{
   'initial_categories': 'Initial Categories',
   'choose_how_to_split_the_balance': 'Choose How to Split the Balance',
   'dokido_will_calculate_category_amounts_from_your_opening_balance':
-      'DokiDo will calculate category amounts from your opening balance.',
+      '{appName} will calculate category amounts from your opening balance.',
   'custom_percentage': 'Custom Percentage',
   'custom_amount': 'Custom Amount',
   'review_before_starting': 'Review Before Starting',
   'if_everything_looks_right_dokido_will_prepare_your_dashboard':
-      'If everything looks right, DokiDo will prepare your dashboard.',
+      'If everything looks right, {appName} will prepare your dashboard.',
   'name': 'Name',
   'balance_source': 'Balance Source',
   'unallocated_balance_2': 'Unallocated Balance',
@@ -1426,7 +1554,7 @@ const _en = <String, String>{
   'budget_category_names_cannot_be_duplicated_2':
       'Budget category names cannot be duplicated.',
   'setup_complete_dokido_is_ready_to_use':
-      'Setup complete. DokiDo is ready to use.',
+      'Setup complete. {appName} is ready to use.',
   'there_must_be_at_least_one_budget_category':
       'There must be at least one budget category.',
   'all_percentages_must_be_greater_than_0':
@@ -1447,7 +1575,7 @@ const _en = <String, String>{
   'choose_the_currency_and_visual_style_that_feels_comfortable':
       'Choose the currency and visual style that feels comfortable.',
   'fresh_modern_and_closest_to_dokido_s_identity':
-      'Fresh, modern, and closest to DokiDo’s identity.',
+      'Fresh, modern, and closest to {appName}’s identity.',
   'soft_lavender_with_warm_balance':
       'Soft lavender with a balanced warm accent.',
   'cool_blue_clean_and_focused': 'Cool blue, clean, and focused.',
@@ -1609,7 +1737,7 @@ const _en = <String, String>{
   'backup_passwords_do_not_match': 'The password confirmation does not match.',
   'backup_password_or_file_invalid':
       'The password is incorrect or the backup file cannot be read.',
-  'backup_file_invalid': 'This is not a valid DokiDo backup file.',
+  'backup_file_invalid': 'This is not a valid {appName} backup file.',
   'backup_password_not_configured':
       'Create a backup password before continuing.',
   'backup_credential_mismatch':
@@ -1648,7 +1776,7 @@ const _en = <String, String>{
   'transactions': 'Transactions',
   'restore_replaces_current_data_warning':
       'All current financial data will be replaced. Your PIN and App Lock settings will be preserved.',
-  'backup_restored_successfully': 'DokiDo data was restored successfully.',
+  'backup_restored_successfully': '{appName} data was restored successfully.',
   'change_display_name': 'Change Display Name',
   'display_name_hint': 'Enter the name you want to display',
   'display_name_required': 'A display name is required.',
@@ -1656,19 +1784,19 @@ const _en = <String, String>{
   'terms_and_conditions': 'Terms & Conditions',
   'privacy_policy': 'Privacy Policy',
   'version': 'Version',
-  'powered_by_niskala': 'Powered by Niskala.dev',
+  'powered_by_developer': 'Powered by {developerName}',
   'terms_and_conditions_content':
       'Last updated: July 2026\n\n'
-      'DokiDo is a personal finance tracking application that works locally on the device. By using DokiDo, users remain responsible for the accuracy of recorded data and financial decisions based on that data.\n\n'
-      'DokiDo does not provide banking, investment, tax, or professional financial advisory services. Application calculations assist with tracking and planning but should still be reviewed by the user.\n\n'
+      '{appName} is a personal finance tracking application that works locally on the device. By using {appName}, users remain responsible for the accuracy of recorded data and financial decisions based on that data.\n\n'
+      '{appName} does not provide banking, investment, tax, or professional financial advisory services. Application calculations assist with tracking and planning but should still be reviewed by the user.\n\n'
       'Users are responsible for protecting their device, application PIN, backup password, and backup files. A backup cannot be restored if its password is forgotten.\n\n'
-      'Features and data structures may change during beta. Niskala.dev works to maintain application reliability, but users should still create backups regularly.',
+      'Features and data structures may change during beta. {developerName} works to maintain application reliability, but users should still create backups regularly.',
   'privacy_policy_content':
       'Last updated: July 2026\n\n'
-      'DokiDo is designed as an offline application. Primary financial data is stored encrypted on the device and is not sent to DokiDo servers.\n\n'
+      '{appName} is designed as an offline application. Primary financial data is stored encrypted on the device and is not sent to {appName} servers.\n\n'
       'Notification permission is used for selected transaction reminders and financial alerts. Backup folder access is granted through the Android folder picker and only applies to the folder approved by the user.\n\n'
       'Backup files are encrypted with the backup password. If users save files to a cloud service or share them, those files are governed by the destination service policies.\n\n'
-      'DokiDo does not access raw biometric data. Biometric verification is performed by the device operating system.',
+      '{appName} does not access raw biometric data. Biometric verification is performed by the device operating system.',
   'notifications': 'Notifications',
   'mark_all_as_read': 'Mark All as Read',
   'unread': 'Unread',
@@ -1677,7 +1805,7 @@ const _en = <String, String>{
   'no_unread_notifications': 'All notifications have been read.',
   'delete_notification': 'Delete Notification?',
   'delete_notification_description':
-      'This notification will be removed from DokiDo.',
+      'This notification will be removed from {appName}.',
   'record_now': 'Record Now',
   'view_budget': 'View Budget',
   'fix': 'Fix',
@@ -1702,7 +1830,8 @@ const _en = <String, String>{
       'Period {period} ends in {days} days.',
   'financial_alert_notification_channel': 'Financial Alerts',
   'financial_alert_notification_channel_description':
-      'DokiDo budget, period, and backup alerts.',
-  'private_notification_title': 'DokiDo Notification',
-  'private_notification_body': 'Open DokiDo to view the latest notification.',
+      '{appName} budget, period, and backup alerts.',
+  'private_notification_title': '{appName} Notification',
+  'private_notification_body':
+      'Open {appName} to view the latest notification.',
 };

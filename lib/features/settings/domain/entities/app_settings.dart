@@ -1,4 +1,5 @@
 import '../../../../app/theme/app_theme_palette.dart';
+import '../../../../core/app_info/app_identity.dart';
 import 'app_lock_timeout.dart';
 import 'backup_frequency.dart';
 import 'app_currency.dart';
@@ -45,13 +46,13 @@ class AppSettings {
   });
 
   factory AppSettings.defaults() {
-    return const AppSettings(
+    return AppSettings(
       hasCompletedSetup: false,
       displayName: '',
-      email: 'feri@dokido.local',
+      email: AppIdentity.developerEmail,
       userType: 'flexible_financial_period_user',
       themeId: 'teal_balance',
-      languageCode: 'id',
+      languageCode: AppLanguage.systemDefault.code,
       currencyCode: 'IDR',
       hideFinancialAmounts: false,
       notificationPermissionPromptDismissed: false,

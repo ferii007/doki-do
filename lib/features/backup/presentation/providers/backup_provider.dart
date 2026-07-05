@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../../core/app_info/app_identity.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../finance/presentation/providers/current_budget_provider.dart';
 import '../../../finance/presentation/providers/finance_repository_provider.dart';
@@ -185,7 +186,7 @@ class BackupController extends AsyncNotifier<BackupState> {
         FlutterErrorDetails(
           exception: error,
           stack: stackTrace,
-          library: 'DokiDo automatic backup',
+          library: '${AppIdentity.appName} automatic backup',
         ),
       );
     } finally {

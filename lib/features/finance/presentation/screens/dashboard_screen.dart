@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/router.dart';
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/app_info/app_identity.dart';
 import '../../../../core/formatters/date_formatter.dart';
 import '../../../../core/formatters/rupiah_formatter.dart';
 import '../../../../core/localization/app_localizations.dart';
@@ -81,7 +82,7 @@ class _DashboardScreenState extends ConsumerState<DashboardScreen> {
         title: Text(switch (_selectedIndex) {
           2 => context.tr('activity_history'),
           3 => context.tr('profile'),
-          _ => 'DokiDo',
+          _ => AppIdentity.appName,
         }),
         actions: [
           _NotificationHeaderButton(

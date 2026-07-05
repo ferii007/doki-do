@@ -5,6 +5,8 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
 }
 
+val appDisplayName = "DokiDo"
+
 android {
     namespace = "com.example.doki_do"
     compileSdk = flutter.compileSdkVersion
@@ -30,14 +32,14 @@ android {
         versionCode = flutter.versionCode
         versionName = flutter.versionName
         multiDexEnabled = true
-        manifestPlaceholders["appLabel"] = "DokiDo"
+        manifestPlaceholders["appLabel"] = appDisplayName
     }
 
     buildTypes {
         getByName("debug") {
             applicationIdSuffix = ".dev"
             versionNameSuffix = "-dev"
-            manifestPlaceholders["appLabel"] = "DokiDo Dev"
+            manifestPlaceholders["appLabel"] = "$appDisplayName Dev"
         }
         release {
             // TODO: Add your own signing config for the release build.

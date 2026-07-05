@@ -6,6 +6,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../core/formatters/date_formatter.dart';
 import '../core/formatters/rupiah_formatter.dart';
+import '../core/app_info/app_identity.dart';
 import '../core/localization/app_localizations.dart';
 import '../core/widgets/error_view.dart';
 import '../features/backup/presentation/providers/backup_provider.dart';
@@ -21,15 +22,14 @@ import 'router.dart';
 import 'theme/app_colors.dart';
 import 'theme/app_theme.dart';
 
-class DokiDoApp extends ConsumerStatefulWidget {
-  const DokiDoApp({super.key});
+class AppRoot extends ConsumerStatefulWidget {
+  const AppRoot({super.key});
 
   @override
-  ConsumerState<DokiDoApp> createState() => _DokiDoAppState();
+  ConsumerState<AppRoot> createState() => _AppRootState();
 }
 
-class _DokiDoAppState extends ConsumerState<DokiDoApp>
-    with WidgetsBindingObserver {
+class _AppRootState extends ConsumerState<AppRoot> with WidgetsBindingObserver {
   @override
   void initState() {
     super.initState();
@@ -65,7 +65,7 @@ class _DokiDoAppState extends ConsumerState<DokiDoApp>
     ref.watch(recurringNotificationBootstrapProvider);
     ref.watch(automaticBackupBootstrapProvider);
     final settings = settingsAsync.asData?.value;
-    final language = settings?.language ?? AppLanguage.id;
+    final language = settings?.language ?? AppLanguage.systemDefault;
     FinancialPrivacyPreference.hideAmounts =
         settings?.hideFinancialAmounts ?? false;
     if (settings != null) {
@@ -75,7 +75,7 @@ class _DokiDoAppState extends ConsumerState<DokiDoApp>
     }
 
     return MaterialApp(
-      title: 'DokiDo Finance',
+      title: AppIdentity.appTitle,
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       locale: Locale(language.code),

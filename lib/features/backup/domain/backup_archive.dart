@@ -1,3 +1,5 @@
+import '../../../core/app_info/app_identity.dart';
+
 class BackupArchive {
   static const format = 'dokido-backup';
   static const version = 1;
@@ -27,7 +29,9 @@ class BackupArchive {
 
   factory BackupArchive.fromJson(Map<String, dynamic> json) {
     if (json['format'] != format || json['version'] != version) {
-      throw const FormatException('Unsupported DokiDo backup format.');
+      throw const FormatException(
+        'Unsupported ${AppIdentity.appName} backup format.',
+      );
     }
     final createdAt = DateTime.tryParse(json['created_at'] as String? ?? '');
     final finance = json['finance'];
@@ -36,7 +40,9 @@ class BackupArchive {
     if (createdAt == null ||
         finance is! Map<String, dynamic> ||
         settings is! Map<String, dynamic>) {
-      throw const FormatException('DokiDo backup content is incomplete.');
+      throw const FormatException(
+        '${AppIdentity.appName} backup content is incomplete.',
+      );
     }
     return BackupArchive(
       createdAt: createdAt.toLocal(),
