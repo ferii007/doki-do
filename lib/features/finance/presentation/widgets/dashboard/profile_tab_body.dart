@@ -4,10 +4,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../../app/router.dart';
 import '../../../../../app/theme/app_colors.dart';
 import '../../../../../core/app_info/app_version_provider.dart';
+import '../../../../../core/config/app_feature_flags.dart';
 import '../../../../../core/localization/app_localizations.dart';
 import '../../../../../core/widgets/amount_text.dart';
 import '../../../../../core/widgets/app_inline_divider.dart';
-import '../../../../../core/widgets/app_toast.dart';
 import '../../../../../core/widgets/loading_view.dart';
 import '../../../../settings/presentation/providers/app_settings_provider.dart';
 import '../../../domain/entities/budget_snapshot.dart';
@@ -460,64 +460,66 @@ class _ProfileDataActionsCard extends StatelessWidget {
             child: _ProfileDataAction(
               icon: Icons.file_upload_outlined,
               label: context.tr('import_data'),
-              onTap: () => _showUnavailableToast(context),
+              enabled: AppFeatureFlags.dataImportEnabled,
+              onTap: AppFeatureFlags.dataImportEnabled ? () {} : null,
             ),
           ),
         ],
       ),
     );
   }
-
-  void _showUnavailableToast(BuildContext context) {
-    AppToast.show(context, context.tr('feature_not_available_yet'));
-  }
 }
 
 class _ProfileDataAction extends StatelessWidget {
   final IconData icon;
   final String label;
-  final VoidCallback onTap;
+  final bool enabled;
+  final VoidCallback? onTap;
 
   const _ProfileDataAction({
     required this.icon,
     required this.label,
     required this.onTap,
+    this.enabled = true,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-      borderRadius: BorderRadius.circular(14),
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Container(
-              width: 36,
-              height: 36,
-              decoration: BoxDecoration(
-                color: AppColors.mintSurface,
-                borderRadius: BorderRadius.circular(11),
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        borderRadius: BorderRadius.circular(14),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 4),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                width: 36,
+                height: 36,
+                decoration: BoxDecoration(
+                  color: AppColors.mintSurface,
+                  borderRadius: BorderRadius.circular(11),
+                ),
+                child: Icon(icon, color: AppColors.primary, size: 20),
               ),
-              child: Icon(icon, color: AppColors.primary, size: 20),
-            ),
-            const SizedBox(width: 9),
-            Flexible(
-              child: Text(
-                label,
-                maxLines: 2,
-                textAlign: TextAlign.left,
-                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                  color: AppColors.textPrimary,
-                  fontWeight: FontWeight.w800,
-                  height: 1.15,
+              const SizedBox(width: 9),
+              Flexible(
+                child: Text(
+                  label,
+                  maxLines: 2,
+                  textAlign: TextAlign.left,
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    color: AppColors.textPrimary,
+                    fontWeight: FontWeight.w800,
+                    height: 1.15,
+                  ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

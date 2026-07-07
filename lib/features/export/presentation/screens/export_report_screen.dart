@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../../app/theme/app_colors.dart';
+import '../../../../core/config/app_feature_flags.dart';
 import '../../../../core/localization/app_localizations.dart';
 import '../../../../core/widgets/app_bottom_sheet.dart';
 import '../../../../core/widgets/app_calendar.dart';
@@ -107,6 +108,9 @@ class _ExportReportScreenState extends ConsumerState<ExportReportScreen> {
                 icon: (value) => value == ReportFormat.pdf
                     ? Icons.picture_as_pdf_outlined
                     : Icons.table_chart_outlined,
+                isEnabled: (value) =>
+                    value != ReportFormat.excel ||
+                    AppFeatureFlags.excelExportEnabled,
                 onSelected: (value) => setState(() => _format = value),
               ),
               const SizedBox(height: 14),
@@ -484,6 +488,7 @@ class _ChoiceCard<T> extends StatelessWidget {
   final List<T> options;
   final String Function(T value) label;
   final IconData Function(T value) icon;
+  final bool Function(T value)? isEnabled;
   final ValueChanged<T> onSelected;
 
   const _ChoiceCard({
@@ -492,6 +497,7 @@ class _ChoiceCard<T> extends StatelessWidget {
     required this.options,
     required this.label,
     required this.icon,
+    this.isEnabled,
     required this.onSelected,
   });
 
@@ -523,6 +529,7 @@ class _ChoiceCard<T> extends StatelessWidget {
                     icon: icon(options[index]),
                     label: label(options[index]),
                     selected: selected == options[index],
+                    enabled: isEnabled?.call(options[index]) ?? true,
                     onTap: () => onSelected(options[index]),
                   ),
                 ),
@@ -540,53 +547,58 @@ class _ChoiceOption extends StatelessWidget {
   final IconData icon;
   final String label;
   final bool selected;
+  final bool enabled;
   final VoidCallback onTap;
 
   const _ChoiceOption({
     required this.icon,
     required this.label,
     required this.selected,
+    this.enabled = true,
     required this.onTap,
   });
 
   @override
   Widget build(BuildContext context) {
-    return InkWell(
-      onTap: onTap,
-      overlayColor: const WidgetStatePropertyAll(Colors.transparent),
-      borderRadius: BorderRadius.circular(14),
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 160),
-        constraints: const BoxConstraints(minHeight: 74),
-        padding: const EdgeInsets.all(11),
-        decoration: BoxDecoration(
-          color: selected ? AppColors.mintSurface : AppColors.background,
-          borderRadius: BorderRadius.circular(14),
-          border: Border.all(
-            color: selected ? AppColors.primary : AppColors.border,
-            width: selected ? 1.5 : 1,
+    return Opacity(
+      opacity: enabled ? 1 : 0.45,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        overlayColor: const WidgetStatePropertyAll(Colors.transparent),
+        borderRadius: BorderRadius.circular(14),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 160),
+          constraints: const BoxConstraints(minHeight: 74),
+          padding: const EdgeInsets.all(11),
+          decoration: BoxDecoration(
+            color: selected ? AppColors.mintSurface : AppColors.background,
+            borderRadius: BorderRadius.circular(14),
+            border: Border.all(
+              color: selected ? AppColors.primary : AppColors.border,
+              width: selected ? 1.5 : 1,
+            ),
           ),
-        ),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              icon,
-              color: selected ? AppColors.primary : AppColors.textSecondary,
-              size: 22,
-            ),
-            const SizedBox(height: 6),
-            Text(
-              label,
-              textAlign: TextAlign.center,
-              maxLines: 2,
-              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                icon,
                 color: selected ? AppColors.primary : AppColors.textSecondary,
-                fontWeight: FontWeight.w800,
-                height: 1.15,
+                size: 22,
               ),
-            ),
-          ],
+              const SizedBox(height: 6),
+              Text(
+                label,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                  color: selected ? AppColors.primary : AppColors.textSecondary,
+                  fontWeight: FontWeight.w800,
+                  height: 1.15,
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );

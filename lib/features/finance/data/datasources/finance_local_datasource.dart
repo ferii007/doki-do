@@ -14,7 +14,7 @@ import '../../domain/entities/budget_allocation_draft.dart';
 import '../local/empty_finance_data.dart';
 
 class FinanceLocalDatasource {
-  static const _schemaVersion = 2;
+  static const _schemaVersion = 4;
   static const _storageFileName = 'doki_do_finance.json';
   static const _encryptionScope = 'finance';
 
@@ -216,6 +216,7 @@ class FinanceLocalDatasource {
 
     final periodId =
         'period_${normalizedStart.year}_${normalizedStart.month.toString().padLeft(2, '0')}_${normalizedStart.day.toString().padLeft(2, '0')}_${_uuid.v4().substring(0, 8)}';
+    final now = DateTime.now().toIso8601String();
     final period = {
       'period_id': periodId,
       'start_date': normalizedStart.toIso8601String(),
@@ -251,6 +252,8 @@ class FinanceLocalDatasource {
             'title': incomeSource,
             'amount': initialIncome,
             'date': normalizedStart.toIso8601String(),
+            'created_at': now,
+            'updated_at': now,
             'type': 'income',
           },
       ],
@@ -273,6 +276,8 @@ class FinanceLocalDatasource {
           }),
           'amount': carryOverAmount,
           'date': normalizedStart.toIso8601String(),
+          'created_at': now,
+          'updated_at': now,
           'type': 'expense',
         });
         (period['transactions'] as List).add({
@@ -283,6 +288,8 @@ class FinanceLocalDatasource {
           }),
           'amount': carryOverAmount,
           'date': normalizedStart.toIso8601String(),
+          'created_at': now,
+          'updated_at': now,
           'type': 'income',
         });
         _recalculatePeriod(carryOverPeriod);
@@ -297,6 +304,8 @@ class FinanceLocalDatasource {
           }),
           'amount': deficitAmount,
           'date': normalizedStart.toIso8601String(),
+          'created_at': now,
+          'updated_at': now,
           'type': 'income',
         });
         (period['transactions'] as List).add({
@@ -307,6 +316,8 @@ class FinanceLocalDatasource {
           }),
           'amount': deficitAmount,
           'date': normalizedStart.toIso8601String(),
+          'created_at': now,
+          'updated_at': now,
           'type': 'expense',
         });
         _recalculatePeriod(carryOverPeriod);
@@ -336,6 +347,7 @@ class FinanceLocalDatasource {
     final data = _findPeriod(database, periodId);
 
     final transactionId = _uuid.v4();
+    final now = DateTime.now().toIso8601String();
     if (recurringTemplateId != null && recurringDueDate != null) {
       _recordRecurringOccurrence(
         database,
@@ -351,6 +363,8 @@ class FinanceLocalDatasource {
       'title': title,
       'amount': amount,
       'date': date.toIso8601String(),
+      'created_at': now,
+      'updated_at': now,
       'type': 'income',
     });
     _recalculatePeriod(data);
@@ -372,6 +386,7 @@ class FinanceLocalDatasource {
     transaction['title'] = title;
     transaction['amount'] = amount;
     transaction['date'] = date.toIso8601String();
+    transaction['updated_at'] = DateTime.now().toIso8601String();
     transaction['type'] = 'income';
     transaction['category_id'] = null;
     _recalculatePeriod(data);
@@ -393,6 +408,7 @@ class FinanceLocalDatasource {
     final data = _findPeriod(database, periodId);
 
     final transactionId = _uuid.v4();
+    final now = DateTime.now().toIso8601String();
     if (recurringTemplateId != null && recurringDueDate != null) {
       _recordRecurringOccurrence(
         database,
@@ -408,6 +424,8 @@ class FinanceLocalDatasource {
       'title': title,
       'amount': amount,
       'date': date.toIso8601String(),
+      'created_at': now,
+      'updated_at': now,
       'type': 'expense',
     });
 
@@ -432,6 +450,7 @@ class FinanceLocalDatasource {
     transaction['title'] = title;
     transaction['amount'] = amount;
     transaction['date'] = date.toIso8601String();
+    transaction['updated_at'] = DateTime.now().toIso8601String();
     transaction['type'] = 'expense';
     _recalculatePeriod(data);
     await _saveDatabase();
@@ -705,6 +724,63 @@ class FinanceLocalDatasource {
     _validateDatabase(normalized);
   }
 
+  void _addCreationTimestamps(Map<String, dynamic> database) {
+    final periods = database['periods'];
+    if (periods is! List) return;
+
+    for (final period in periods.whereType<Map<String, dynamic>>()) {
+      _normalizeCreationTimestamps(period);
+    }
+  }
+
+  void _normalizeCreationTimestamps(Map<String, dynamic> period) {
+    final transactions = period['transactions'];
+    if (transactions is List) {
+      for (final transaction
+          in transactions.whereType<Map<String, dynamic>>()) {
+        transaction['created_at'] = _validIsoDate(
+          transaction['created_at'],
+          fallback: transaction['date'],
+        );
+        transaction['updated_at'] = _validIsoDate(
+          transaction['updated_at'],
+          fallback: transaction['created_at'],
+        );
+      }
+    }
+
+    final adjustments = period['category_adjustments'];
+    if (adjustments is List) {
+      for (final adjustment in adjustments.whereType<Map<String, dynamic>>()) {
+        adjustment['created_at'] = _validIsoDate(
+          adjustment['created_at'],
+          fallback: adjustment['date'],
+        );
+        adjustment['updated_at'] = _validIsoDate(
+          adjustment['updated_at'],
+          fallback: adjustment['created_at'],
+        );
+      }
+    }
+  }
+
+  void _addUpdateTimestamps(Map<String, dynamic> database) {
+    final periods = database['periods'];
+    if (periods is! List) return;
+
+    for (final period in periods.whereType<Map<String, dynamic>>()) {
+      _normalizeCreationTimestamps(period);
+    }
+  }
+
+  String _validIsoDate(Object? value, {required Object? fallback}) {
+    if (value is String && DateTime.tryParse(value) != null) return value;
+    if (fallback is String && DateTime.tryParse(fallback) != null) {
+      return fallback;
+    }
+    return DateTime.now().toIso8601String();
+  }
+
   Map<String, dynamic> _migrateDatabase(Map<String, dynamic> database) {
     var version = database['schema_version'] as int? ?? 0;
     if (version > _schemaVersion) {
@@ -723,6 +799,14 @@ class FinanceLocalDatasource {
           database['recurring_occurrences'] ??= <Map<String, dynamic>>[];
           database['schema_version'] = 2;
           version = 2;
+        case 2:
+          _addCreationTimestamps(database);
+          database['schema_version'] = 3;
+          version = 3;
+        case 3:
+          _addUpdateTimestamps(database);
+          database['schema_version'] = 4;
+          version = 4;
         default:
           throw FormatException(
             'No finance migration exists from schema version $version.',
@@ -771,6 +855,7 @@ class FinanceLocalDatasource {
           (period['category_adjustments'] as List? ?? [])
               .whereType<Map<String, dynamic>>()
               .toList();
+      _normalizeCreationTimestamps(period);
       final rawTotalIncome = (period['transactions'] as List)
           .cast<Map<String, dynamic>>()
           .where((transaction) => transaction['type'] == 'income')
@@ -935,6 +1020,10 @@ class FinanceLocalDatasource {
             (transaction['amount'] as int) < 0 ||
             transaction['date'] is! String ||
             DateTime.tryParse(transaction['date'] as String) == null ||
+            transaction['created_at'] is! String ||
+            DateTime.tryParse(transaction['created_at'] as String) == null ||
+            transaction['updated_at'] is! String ||
+            DateTime.tryParse(transaction['updated_at'] as String) == null ||
             (type != 'income' && type != 'expense') ||
             (categoryId != null && !categoryIds.contains(categoryId))) {
           throw FormatException(
@@ -964,7 +1053,11 @@ class FinanceLocalDatasource {
             adjustment['new_amount'] is! int ||
             adjustment['reason'] is! String ||
             adjustment['date'] is! String ||
-            DateTime.tryParse(adjustment['date'] as String) == null) {
+            DateTime.tryParse(adjustment['date'] as String) == null ||
+            adjustment['created_at'] is! String ||
+            DateTime.tryParse(adjustment['created_at'] as String) == null ||
+            adjustment['updated_at'] is! String ||
+            DateTime.tryParse(adjustment['updated_at'] as String) == null) {
           throw FormatException(
             'Finance period "$periodId" has an invalid adjustment.',
           );
@@ -1273,6 +1366,7 @@ class FinanceLocalDatasource {
     required DateTime date,
     String? relatedCategoryId,
   }) {
+    final now = DateTime.now().toIso8601String();
     (period['category_adjustments'] as List).add({
       'adjustment_id': _uuid.v4(),
       'category_id': categoryId,
@@ -1284,6 +1378,8 @@ class FinanceLocalDatasource {
       'new_amount': newAmount,
       'reason': reason,
       'date': date.toIso8601String(),
+      'created_at': now,
+      'updated_at': now,
     });
   }
 

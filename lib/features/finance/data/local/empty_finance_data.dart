@@ -1,6 +1,6 @@
 Map<String, dynamic> createEmptyFinanceData() {
   return {
-    'schema_version': 2,
+    'schema_version': 4,
     'status': 'success',
     'current_period_id': null,
     'periods': <Map<String, dynamic>>[],

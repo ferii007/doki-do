@@ -11,6 +11,7 @@ import '../../../../core/widgets/error_view.dart';
 import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/category_adjustment.dart';
 import '../../domain/entities/transaction_type.dart';
+import '../../domain/services/finance_entry_sorter.dart';
 import '../providers/current_budget_provider.dart';
 import '../providers/transaction_action_provider.dart';
 import '../widgets/category_detail/category_balance_header.dart';
@@ -60,7 +61,7 @@ class CategoryDetailScreen extends ConsumerWidget {
               snapshot.categoryAdjustments
                   .where((item) => item.categoryId == category.id)
                   .toList()
-                ..sort((a, b) => b.date.compareTo(a.date));
+                ..sort(FinanceEntrySorter.newestAdjustmentFirst);
 
           return ListView(
             padding: const EdgeInsets.all(16),

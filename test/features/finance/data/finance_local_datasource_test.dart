@@ -88,7 +88,7 @@ void main() {
     final decrypted = await encryption.decrypt(migratedFile, scope: 'finance');
     final migratedJson =
         jsonDecode(decrypted.plaintext) as Map<String, dynamic>;
-    expect(migratedJson['schema_version'], 2);
+    expect(migratedJson['schema_version'], 4);
     expect(migratedJson['recurring_occurrences'], isEmpty);
   });
 
@@ -168,6 +168,62 @@ void main() {
       expect(storedPeriod['transactions'], hasLength(2));
     },
   );
+
+  test('keeps created_at and changes updated_at when editing income', () async {
+    final datasource = FinanceLocalDatasource(
+      encryptedStorage: EncryptedStorage(keyStore: MemoryEncryptionKeyStore()),
+    );
+    final period = await datasource.addBudgetPeriod(
+      startDate: DateTime(2026, 7),
+      endDate: DateTime(2026, 7, 31),
+      initialIncome: 0,
+      incomeSource: 'Saldo Awal',
+      defaultAllocations: const [
+        BudgetAllocationDraft(
+          name: 'Kebutuhan Harian',
+          percentage: 100,
+          amount: 0,
+        ),
+      ],
+      allocationsFollowIncome: false,
+    );
+    final periodId = period['period_id'] as String;
+
+    await datasource.addIncome(
+      periodId: periodId,
+      amount: 100000,
+      title: 'Bonus',
+      date: DateTime(2026, 7, 3),
+    );
+
+    var stored = await datasource.getBudgetByPeriodId(periodId);
+    var storedPeriod = stored['data'] as Map<String, dynamic>;
+    var transaction =
+        (storedPeriod['transactions'] as List).single as Map<String, dynamic>;
+    final transactionId = transaction['transaction_id'] as String;
+    final createdAt = transaction['created_at'];
+    final firstUpdatedAt = transaction['updated_at'];
+    expect(createdAt, firstUpdatedAt);
+
+    await Future<void>.delayed(const Duration(milliseconds: 2));
+    await datasource.updateIncome(
+      periodId: periodId,
+      transactionId: transactionId,
+      amount: 150000,
+      title: 'Bonus Revisi',
+      date: DateTime(2026, 7, 3),
+    );
+
+    stored = await datasource.getBudgetByPeriodId(periodId);
+    storedPeriod = stored['data'] as Map<String, dynamic>;
+    transaction =
+        (storedPeriod['transactions'] as List).single as Map<String, dynamic>;
+    expect(transaction['created_at'], createdAt);
+    expect(
+      DateTime.parse(transaction['updated_at'] as String),
+      isNot(DateTime.parse(firstUpdatedAt as String)),
+    );
+  });
 
   test(
     'does not overwrite encrypted data when the key is unavailable',

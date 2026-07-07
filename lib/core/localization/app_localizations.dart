@@ -174,8 +174,8 @@ const _id = <String, String>{
   'budget_category_added_successfully':
       'Kategori anggaran berhasil ditambahkan.',
   'unallocated_balance': 'Sisa Yang Belum Dibagi',
-  'income_details': 'Rincian Uang Masuk',
-  'expense_details': 'Rincian Uang Keluar',
+  'income_details': 'Riwayat Uang Masuk',
+  'expense_details': 'Riwayat Uang Keluar',
   'budget_details': 'Rincian Anggaran',
   'create_a_financial_period_first_to_view_income':
       'Buat periode keuangan dulu untuk melihat uang masuk.',
@@ -1053,8 +1053,8 @@ const _en = <String, String>{
       'The amount exceeds the remaining allocatable balance, which is {amount}.',
   'budget_category_added_successfully': 'Budget category added successfully.',
   'unallocated_balance': 'Unallocated Balance',
-  'income_details': 'Income Details',
-  'expense_details': 'Expense Details',
+  'income_details': 'Income History',
+  'expense_details': 'Expense History',
   'budget_details': 'Budget Details',
   'create_a_financial_period_first_to_view_income':
       'Create a financial period first to view income.',

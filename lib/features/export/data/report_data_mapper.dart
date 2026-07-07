@@ -3,6 +3,7 @@ import '../../../core/app_info/app_identity.dart';
 import '../../finance/domain/entities/budget_snapshot.dart';
 import '../../finance/domain/entities/transaction_item.dart';
 import '../../finance/domain/entities/transaction_type.dart';
+import '../../finance/domain/services/finance_entry_sorter.dart';
 import '../domain/export_report_request.dart';
 
 class ReportDataset {
@@ -47,7 +48,15 @@ class ReportDataset {
     final rows = <ReportTransactionData>[
       for (final period in periods) ...period.transactions,
     ];
-    rows.sort((a, b) => a.date.compareTo(b.date));
+    rows.sort((a, b) {
+      final byTransactionDate = a.date.compareTo(b.date);
+      if (byTransactionDate != 0) return byTransactionDate;
+
+      final byCreatedAt = a.createdAt.compareTo(b.createdAt);
+      if (byCreatedAt != 0) return byCreatedAt;
+
+      return a.description.compareTo(b.description);
+    });
     return rows;
   }
 
@@ -188,9 +197,13 @@ class ReportPeriodData {
 
   bool get _hasDateFilter => rangeStart != null || rangeEnd != null;
 
-  List<TransactionItem> get _transactions => snapshot.transactions
-      .where((transaction) => _includesDate(transaction.date))
-      .toList(growable: false);
+  List<TransactionItem> get _transactions {
+    final rows = snapshot.transactions
+        .where((transaction) => _includesDate(transaction.date))
+        .toList();
+    rows.sort(FinanceEntrySorter.oldestTransactionFirst);
+    return rows;
+  }
 
   int get totalIncome => _hasDateFilter
       ? _transactions
@@ -249,6 +262,7 @@ class ReportPeriodData {
           description: transaction.title,
           amount: transaction.amount,
           date: transaction.date,
+          createdAt: transaction.createdAt,
         ),
     ];
   }
@@ -288,6 +302,7 @@ class ReportTransactionData {
   final String description;
   final int amount;
   final DateTime date;
+  final DateTime createdAt;
 
   const ReportTransactionData({
     required this.periodLabel,
@@ -296,6 +311,7 @@ class ReportTransactionData {
     required this.description,
     required this.amount,
     required this.date,
+    required this.createdAt,
   });
 }
 

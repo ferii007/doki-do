@@ -11,6 +11,8 @@ class CategoryAdjustment {
   final int newAmount;
   final String reason;
   final DateTime date;
+  final DateTime createdAt;
+  final DateTime updatedAt;
 
   const CategoryAdjustment({
     required this.id,
@@ -23,9 +25,13 @@ class CategoryAdjustment {
     required this.reason,
     required this.date,
     this.relatedCategoryId,
-  });
+    DateTime? createdAt,
+    DateTime? updatedAt,
+  }) : createdAt = createdAt ?? date,
+       updatedAt = updatedAt ?? createdAt ?? date;
 
   factory CategoryAdjustment.fromJson(Map<String, dynamic> json) {
+    final date = DateTime.parse(json['date'] as String);
     return CategoryAdjustment(
       id: json['adjustment_id'] as String,
       categoryId: json['category_id'] as String,
@@ -36,7 +42,12 @@ class CategoryAdjustment {
       previousAmount: json['previous_amount'] as int,
       newAmount: json['new_amount'] as int,
       reason: json['reason'] as String,
-      date: DateTime.parse(json['date'] as String),
+      date: date,
+      createdAt: DateTime.tryParse(json['created_at'] as String? ?? '') ?? date,
+      updatedAt:
+          DateTime.tryParse(json['updated_at'] as String? ?? '') ??
+          DateTime.tryParse(json['created_at'] as String? ?? '') ??
+          date,
     );
   }
 

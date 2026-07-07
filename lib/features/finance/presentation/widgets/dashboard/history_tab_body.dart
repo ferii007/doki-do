@@ -250,6 +250,8 @@ class _HistoryTabBodyState extends ConsumerState<HistoryTabBody> {
                 '${transaction.title} ${category?.name ?? ''} $periodLabel',
             amount: transaction.amount,
             date: transaction.date,
+            createdAt: transaction.createdAt,
+            stableId: transaction.id,
             kind: isIncome ? _HistoryFilter.income : _HistoryFilter.expense,
             periodId: snapshot.period.id,
           ),
@@ -269,6 +271,8 @@ class _HistoryTabBodyState extends ConsumerState<HistoryTabBody> {
                 '${category?.name ?? ''} ${adjustment.reason} $periodLabel',
             amount: adjustment.deltaAmount,
             date: adjustment.date,
+            createdAt: adjustment.createdAt,
+            stableId: adjustment.id,
             kind: _HistoryFilter.budgetChange,
             periodId: snapshot.period.id,
             categoryId: adjustment.categoryId,
@@ -277,7 +281,7 @@ class _HistoryTabBodyState extends ConsumerState<HistoryTabBody> {
       }
     }
 
-    entries.sort((first, second) => second.date.compareTo(first.date));
+    entries.sort(_sortHistoryEntries);
     return entries;
   }
 
@@ -349,6 +353,16 @@ class _HistoryTabBodyState extends ConsumerState<HistoryTabBody> {
               _HistoryDateGroupData(date: group.key, entries: group.value),
         )
         .toList();
+  }
+
+  int _sortHistoryEntries(_HistoryEntry first, _HistoryEntry second) {
+    final byTransactionDate = second.date.compareTo(first.date);
+    if (byTransactionDate != 0) return byTransactionDate;
+
+    final byCreatedAt = second.createdAt.compareTo(first.createdAt);
+    if (byCreatedAt != 0) return byCreatedAt;
+
+    return second.stableId.compareTo(first.stableId);
   }
 
   String _dateGroupLabel(BuildContext context, DateTime date) {
@@ -1194,6 +1208,8 @@ class _HistoryEntry {
   final String searchText;
   final int amount;
   final DateTime date;
+  final DateTime createdAt;
+  final String stableId;
   final _HistoryFilter kind;
   final String? periodId;
   final String? categoryId;
@@ -1204,6 +1220,8 @@ class _HistoryEntry {
     required this.searchText,
     required this.amount,
     required this.date,
+    required this.createdAt,
+    required this.stableId,
     required this.kind,
     this.periodId,
     this.categoryId,

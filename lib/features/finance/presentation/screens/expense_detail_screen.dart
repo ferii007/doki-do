@@ -12,6 +12,7 @@ import '../../../../core/widgets/loading_view.dart';
 import '../../domain/entities/category_budget.dart';
 import '../../domain/entities/transaction_item.dart';
 import '../../domain/entities/transaction_type.dart';
+import '../../domain/services/finance_entry_sorter.dart';
 import '../providers/current_budget_provider.dart';
 import '../providers/transaction_action_provider.dart';
 import '../widgets/transaction_form/transaction_edit_sheet.dart';
@@ -45,7 +46,7 @@ class ExpenseDetailScreen extends ConsumerWidget {
               snapshot.transactions
                   .where((item) => item.type == TransactionType.expense)
                   .toList()
-                ..sort((a, b) => b.date.compareTo(a.date));
+                ..sort(FinanceEntrySorter.newestTransactionFirst);
 
           return ListView(
             padding: const EdgeInsets.all(16),

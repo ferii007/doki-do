@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../../../../../core/localization/app_localizations.dart';
 import '../../../../../core/widgets/empty_state.dart';
 import '../../../domain/entities/transaction_item.dart';
+import '../../../domain/services/finance_entry_sorter.dart';
 import 'transaction_tile.dart';
 
 class TransactionTimeline extends StatelessWidget {
@@ -19,7 +20,8 @@ class TransactionTimeline extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final sorted = [...transactions]..sort((a, b) => b.date.compareTo(a.date));
+    final sorted = [...transactions]
+      ..sort(FinanceEntrySorter.newestTransactionFirst);
 
     if (sorted.isEmpty) {
       return EmptyState(
