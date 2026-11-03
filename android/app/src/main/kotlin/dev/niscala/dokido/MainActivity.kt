@@ -1,4 +1,4 @@
-package com.example.doki_do
+package dev.niscala.dokido
 
 import android.app.Activity
 import android.content.Intent
