@@ -43,3 +43,16 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+
+# Release builds and bundles (share them outside git)
+*.apk
+*.aab
+*.apks
+*.ipa
+*.zip
+
+# Signing keys and secrets
+*.jks
+*.keystore
+key.properties
+.env*
